@@ -2,6 +2,7 @@ import React from 'react';
 import { View, StyleSheet, ViewStyle, useColorScheme } from 'react-native';
 import { Colors, Shadows } from '../../constants/theme';
 import Animated, { FadeInUp, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
+import { useAuth } from '../../context/AuthContext';
 
 interface ElevatedCardProps {
   children: React.ReactNode;
@@ -13,6 +14,9 @@ export function ElevatedCard({ children, style, delay = 0 }: ElevatedCardProps) 
   const colorScheme = useColorScheme() ?? 'light';
   const theme = Colors[colorScheme];
   const isDark = colorScheme === 'dark';
+  const { role } = useAuth();
+
+  const accentColor = role === 'WORKER' ? theme.worker : theme.business;
 
   const scanStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: withRepeat(withSequence(withTiming(0, { duration: 0 }), withTiming(100, { duration: 3000 })), -1, true) }],
@@ -25,8 +29,8 @@ export function ElevatedCard({ children, style, delay = 0 }: ElevatedCardProps) 
       style={[
         styles.card, 
         { 
-          backgroundColor: isDark ? 'rgba(30, 41, 59, 0.5)' : theme.card, 
-          borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : theme.border,
+          backgroundColor: isDark ? theme.card : theme.card, 
+          borderColor: theme.border,
           borderWidth: 1,
         }, 
         Shadows.medium, 
@@ -35,7 +39,7 @@ export function ElevatedCard({ children, style, delay = 0 }: ElevatedCardProps) 
     >
       {isDark && (
         <View style={StyleSheet.absoluteFill} pointerEvents="none">
-          <Animated.View style={[styles.scanLine, scanStyle]} />
+          <Animated.View style={[styles.scanLine, { backgroundColor: accentColor, shadowColor: accentColor }, scanStyle]} />
         </View>
       )}
       {children}
@@ -52,8 +56,6 @@ const styles = StyleSheet.create({
   scanLine: {
     height: 2,
     width: '100%',
-    backgroundColor: '#00F0FF',
-    shadowColor: '#00F0FF',
     shadowOffset: { width: 0, height: 0 },
     shadowOpacity: 1,
     shadowRadius: 10,

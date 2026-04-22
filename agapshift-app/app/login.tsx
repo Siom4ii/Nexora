@@ -1,11 +1,12 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TextInput, TouchableOpacity, useColorScheme, KeyboardAvoidingView, Platform, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, useColorScheme, KeyboardAvoidingView, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../context/AuthContext';
 import { Colors, Shadows } from '../constants/theme';
 import { ModernButton } from '../components/ui/ModernButton';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
+import { ResponsiveContainer } from '../components/ui/ResponsiveContainer';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -18,6 +19,8 @@ export default function LoginScreen() {
   const [otp, setOtp] = useState(['', '', '', '', '', '']);
   const [error, setError] = useState<string | null>(null);
   const otpInputs = useRef<Array<TextInput | null>>([]);
+
+  const accentColor = role === 'BUSINESS' ? theme.business : theme.worker;
 
   const handleSendOtp = () => {
     // PH Format check: must start with 9 and be exactly 10 digits
@@ -67,97 +70,100 @@ export default function LoginScreen() {
       behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
       style={[styles.container, { backgroundColor: theme.background }]}
     >
-      <View style={styles.content}>
-        <Animated.View entering={FadeInDown.duration(800)}>
-          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-            <Ionicons name="arrow-back" size={24} color={theme.text} />
-          </TouchableOpacity>
-          <Text style={[styles.title, { color: theme.text }]}>
-            {otpSent ? 'Confirm Identity' : 'Mobile Security'}
-          </Text>
-          <Text style={[styles.subtitle, { color: theme.muted }]}>
-            {otpSent 
-              ? `A 6-digit code was sent to +63 ${mobileNumber}. Type it in to become SIM-verified.` 
-              : 'Enter your Business Mobile Number to generate a secure OTP.'}
-          </Text>
-        </Animated.View>
-
-        {!otpSent ? (
-          <Animated.View entering={FadeInUp.delay(200).duration(800)}>
-            <View style={[
-              styles.inputContainer, 
-              { backgroundColor: theme.card, borderColor: error ? '#FF3B30' : 'transparent', borderWidth: error ? 2 : 0 }, 
-              Shadows.light
-            ]}>
-              <Text style={[styles.prefix, { color: theme.text }]}>+63</Text>
-              <TextInput
-                style={[styles.input, { color: theme.text }]}
-                placeholder="917 123 4567"
-                placeholderTextColor={theme.muted}
-                keyboardType="phone-pad"
-                maxLength={10}
-                value={mobileNumber}
-                onChangeText={handleMobileChange}
-                autoFocus
-              />
-            </View>
-            {error && <Text style={styles.errorMessage}>{error}</Text>}
-            <ModernButton 
-              title="Generate OTP" 
-              onPress={handleSendOtp}
-              disabled={mobileNumber.length < 10}
-              style={styles.button}
-            />
-          </Animated.View>
-        ) : (
-          <Animated.View entering={FadeInUp.delay(200).duration(800)}>
-            <View style={styles.otpContainer}>
-              {otp.map((digit, index) => (
-                <TextInput
-                  key={index}
-                  ref={ref => otpInputs.current[index] = ref}
-                  style={[
-                    styles.otpInput, 
-                    { 
-                      backgroundColor: theme.card, 
-                      color: theme.text,
-                      borderColor: error ? '#FF3B30' : (digit ? theme.business : theme.border)
-                    },
-                    Shadows.light
-                  ]}
-                  keyboardType="number-pad"
-                  maxLength={1}
-                  value={digit}
-                  onChangeText={(v) => handleOtpChange(v, index)}
-                  onKeyPress={({ nativeEvent }) => {
-                    if (nativeEvent.key === 'Backspace' && !digit && index > 0) {
-                      otpInputs.current[index - 1]?.focus();
-                    }
-                  }}
-                />
-              ))}
-            </View>
-            {error && <Text style={[styles.errorMessage, { textAlign: 'center', marginBottom: 20 }]}>{error}</Text>}
-            <ModernButton 
-              title="Confirm" 
-              onPress={handleConfirm}
-              style={styles.button}
-              variant="business"
-            />
-            <TouchableOpacity onPress={() => setOtpSent(false)} style={styles.resendButton}>
-              <Text style={[styles.resendText, { color: theme.business }]}>Resend Code</Text>
+      <ResponsiveContainer maxWidth={500}>
+        <View style={styles.content}>
+          <Animated.View entering={FadeInDown.duration(800)}>
+            <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+              <Ionicons name="arrow-back" size={24} color={theme.text} />
             </TouchableOpacity>
+            <Text style={[styles.title, { color: theme.text }]}>
+              {otpSent ? 'Confirm Identity' : 'Mobile Security'}
+            </Text>
+            <Text style={[styles.subtitle, { color: theme.muted }]}>
+              {otpSent 
+                ? `A 6-digit code was sent to +63 ${mobileNumber}. Type it in to become SIM-verified.` 
+                : 'Enter your Business Mobile Number to generate a secure OTP.'}
+            </Text>
           </Animated.View>
-        )}
 
-        <View style={styles.privacyFooter}>
-          <Text style={[styles.privacyText, { color: theme.muted }]}>
-            By proceeding, you agree to AgapShift's{' '}
-            <Text onPress={() => router.push('/terms')} style={styles.linkText}>Terms of Service</Text> and{' '}
-            <Text onPress={() => router.push('/privacy')} style={styles.linkText}>Data Privacy Policy</Text>. We use your data to verify your identity and ensure platform security.
-          </Text>
+          {!otpSent ? (
+            <Animated.View entering={FadeInUp.delay(200).duration(800)}>
+              <View style={[
+                styles.inputContainer, 
+                { backgroundColor: theme.card, borderColor: error ? theme.danger : 'transparent', borderWidth: error ? 2 : 0 }, 
+                Shadows.light
+              ]}>
+                <Text style={[styles.prefix, { color: theme.text }]}>+63</Text>
+                <TextInput
+                  style={[styles.input, { color: theme.text }]}
+                  placeholder="917 123 4567"
+                  placeholderTextColor={theme.muted}
+                  keyboardType="phone-pad"
+                  maxLength={10}
+                  value={mobileNumber}
+                  onChangeText={handleMobileChange}
+                  autoFocus
+                />
+              </View>
+              {error && <Text style={[styles.errorMessage, { color: theme.danger }]}>{error}</Text>}
+              <ModernButton 
+                title="Generate OTP" 
+                onPress={handleSendOtp}
+                disabled={mobileNumber.length < 10}
+                variant={role === 'BUSINESS' ? 'business' : 'worker'}
+                style={styles.button}
+              />
+            </Animated.View>
+          ) : (
+            <Animated.View entering={FadeInUp.delay(200).duration(800)}>
+              <View style={styles.otpContainer}>
+                {otp.map((digit, index) => (
+                  <TextInput
+                    key={index}
+                    ref={(ref: TextInput | null) => { otpInputs.current[index] = ref; }}
+                    style={[
+                      styles.otpInput, 
+                      { 
+                        backgroundColor: theme.card, 
+                        color: theme.text,
+                        borderColor: error ? theme.danger : (digit ? accentColor : theme.border)
+                      },
+                      Shadows.light
+                    ]}
+                    keyboardType="number-pad"
+                    maxLength={1}
+                    value={digit}
+                    onChangeText={(v) => handleOtpChange(v, index)}
+                    onKeyPress={({ nativeEvent }) => {
+                      if (nativeEvent.key === 'Backspace' && !digit && index > 0) {
+                        otpInputs.current[index - 1]?.focus();
+                      }
+                    }}
+                  />
+                ))}
+              </View>
+              {error && <Text style={[styles.errorMessage, { color: theme.danger, textAlign: 'center', marginBottom: 20 }]}>{error}</Text>}
+              <ModernButton 
+                title="Confirm" 
+                onPress={handleConfirm}
+                style={styles.button}
+                variant={role === 'BUSINESS' ? 'business' : 'worker'}
+              />
+              <TouchableOpacity onPress={() => setOtpSent(false)} style={styles.resendButton}>
+                <Text style={[styles.resendText, { color: accentColor }]}>Resend Code</Text>
+              </TouchableOpacity>
+            </Animated.View>
+          )}
+
+          <View style={styles.privacyFooter}>
+            <Text style={[styles.privacyText, { color: theme.muted }]}>
+              By proceeding, you agree to AgapShift&apos;s{' '}
+              <Text onPress={() => router.push('/terms')} style={[styles.linkText, { color: accentColor }]}>Terms of Service</Text> and{' '}
+              <Text onPress={() => router.push('/privacy')} style={[styles.linkText, { color: accentColor }]}>Data Privacy Policy</Text>. We use your data to verify your identity and ensure platform security.
+            </Text>
+          </View>
         </View>
-      </View>
+      </ResponsiveContainer>
     </KeyboardAvoidingView>
   );
 }
@@ -173,12 +179,6 @@ const styles = StyleSheet.create({
   },
   backButton: {
     marginBottom: 20,
-  },
-  headerLogo: {
-    width: 150,
-    height: 150,
-    marginBottom: 24,
-    alignSelf: 'center',
   },
   title: {
     fontSize: 32,
@@ -211,7 +211,6 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   errorMessage: {
-    color: '#FF3B30',
     fontSize: 12,
     fontWeight: '700',
     marginTop: -16,

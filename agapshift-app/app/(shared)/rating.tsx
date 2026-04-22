@@ -36,7 +36,7 @@ export default function RatingScreen() {
 
       <Animated.View entering={FadeInDown.duration(800)} style={styles.content}>
         <Text style={[styles.title, { color: theme.text }]}>RATE {targetName}</Text>
-        <Text style={[styles.subtitle, { color: theme.muted }]}>// EVALUATING PERFORMANCE METRICS</Text>
+        <Text style={[styles.subtitle, { color: theme.muted }]}>EVALUATING PERFORMANCE METRICS</Text>
         
         <View style={styles.starsContainer}>
           {[1, 2, 3, 4, 5].map((star) => (

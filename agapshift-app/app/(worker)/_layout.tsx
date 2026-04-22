@@ -2,6 +2,7 @@ import { Tabs } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import React, { useEffect } from 'react';
 import { Platform, StyleSheet, View, Text, TouchableOpacity } from 'react-native';
+import { Image } from 'expo-image';
 import { Colors, Shadows } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { HapticTab } from '@/components/haptic-tab';
@@ -86,46 +87,6 @@ export default function WorkerTabsLayout() {
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={[styles.header, { backgroundColor: theme.background }]}>
-        <View style={styles.headerContent}>
-          <View>
-            <Text style={[styles.brand, { color: theme.text }]}>AGAP SHIFT</Text>
-            <Text style={[styles.hudLabel, { color: theme.muted }]}>F UNIT STATUS: {workerData.isOnline ? 'ACTIVE' : 'IDLE'}</Text>
-          </View>
-
-          <TouchableOpacity 
-            onPress={toggleOnline} 
-            activeOpacity={1}
-            style={styles.switchTouchArea}
-          >
-            <Animated.View style={[styles.switchContainer, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : theme.border + '30' }, containerStyle]}>
-              <Animated.View style={[
-                styles.glowLayer, 
-                { shadowColor: theme.worker },
-                animatedGlowStyle
-              ]} />
-              
-              {/* Background Selector (Sliding highlight) */}
-              <Animated.View style={[
-                styles.selector, 
-                workerData.isOnline && Shadows.glow.worker,
-                animatedSelectorStyle
-              ]} />
-
-              {/* Labels on Top Layer */}
-              <View style={styles.switchLabels}>
-                <View style={styles.labelWrapper}>
-                  <Animated.Text style={[styles.switchText, offlineTextStyle]}>OFFLINE</Animated.Text>
-                </View>
-                <View style={styles.labelWrapper}>
-                  <Animated.Text style={[styles.switchText, onlineTextStyle]}>ONLINE</Animated.Text>
-                </View>
-              </View>
-            </Animated.View>
-          </TouchableOpacity>
-        </View>
-      </View>
-
       <Tabs
         screenOptions={{
           tabBarActiveTintColor: theme.worker,
@@ -187,8 +148,14 @@ export default function WorkerTabsLayout() {
 }
 
 const styles = StyleSheet.create({
-  header: { paddingTop: 60, paddingBottom: 16, paddingHorizontal: 24 },
+  header: { 
+    paddingTop: 45, 
+    paddingBottom: 16, 
+    paddingHorizontal: 24,
+    borderBottomWidth: 1,
+  },
   headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  logo: { width: 140, height: 40 },
   brand: { fontSize: 18, fontWeight: '900', letterSpacing: 2 },
   hudLabel: { fontSize: 8, fontWeight: '900', marginTop: 2, letterSpacing: 1 },
   switchTouchArea: { padding: 4 },

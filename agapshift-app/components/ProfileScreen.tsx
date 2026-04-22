@@ -1,202 +1,75 @@
 import React from 'react';
-import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, ScrollView } from 'react-native';
-import { useAuth } from '../context/AuthContext';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Image, Platform } from 'react-native';
 import { Colors, Shadows } from '../constants/theme';
-import { ModernButton } from './ui/ModernButton';
+import { useAuth } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown, FadeInUp } from 'react-native-reanimated';
-import { useRouter } from 'expo-router';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 
-export default function ProfileScreen() {
-  const { role, logout, isKycVerified } = useAuth();
+export function ProfileScreen() {
   const colorScheme = useColorScheme() ?? 'light';
   const theme = Colors[colorScheme];
-  const router = useRouter();
+  const { role, logout } = useAuth();
+  const isWorker = role === 'WORKER';
+  const accentColor = isWorker ? theme.worker : theme.business;
 
-  const handleLogout = () => {
-    logout();
-    router.replace('/');
-  };
-
-  const accentColor = role === 'WORKER' ? theme.worker : theme.business;
+  const menuItems = [
+    { icon: 'person-outline', label: 'Personal Information', sub: 'Verified' },
+    { icon: 'shield-checkmark-outline', label: 'Security & Privacy', sub: 'SIM Linked' },
+    { icon: 'notifications-outline', label: 'Notifications', sub: 'All Alerts On', badge: true, badgeColor: theme.warning },
+    { icon: 'help-circle-outline', label: 'Support Center', sub: '24/7 Assistance', badgeColor: theme.info },
+  ];
 
   return (
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
-      <View style={styles.header}>
-        <Animated.View entering={FadeInDown.duration(800)} style={styles.profileHeader}>
-          <View style={[styles.avatarContainer, { backgroundColor: accentColor + '20' }]}>
-            <Ionicons name="person" size={60} color={accentColor} />
-            {isKycVerified && (
-              <View style={[styles.verifiedBadge, { backgroundColor: theme.business }]}>
-                <Ionicons name="checkmark" size={12} color="#fff" />
-              </View>
-            )}
+      <Animated.View entering={FadeInDown.duration(800)} style={[styles.header, { backgroundColor: theme.card }, Shadows.medium]}>
+        <View style={[styles.avatarContainer, { borderColor: accentColor }]}>
+          <Ionicons name="person" size={50} color={accentColor} />
+          <View style={[styles.verifiedBadge, { backgroundColor: theme.success }]}>
+            <Ionicons name="checkmark" size={12} color={theme.white} />
           </View>
-          <Text style={[styles.userName, { color: theme.text }]}>
-            {role === 'WORKER' ? 'Juan Dela Cruz' : 'AgapShift Partner'}
-          </Text>
-          <Text style={[styles.userRole, { color: theme.muted }]}>
-            {role === 'WORKER' ? 'Verified Worker' : 'Business Owner'}
-          </Text>
-        </Animated.View>
-      </View>
+        </View>
+        <Text style={[styles.name, { color: theme.text }]}>JUAN DELA CRUZ</Text>
+        <Text style={[styles.role, { color: theme.muted }]}>{role} • DAVAO DEL SUR</Text>
+      </Animated.View>
 
-      <View style={styles.content}>
-        <Animated.View entering={FadeInUp.delay(200).duration(800)} style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>
-            {role === 'BUSINESS' ? 'Enterprise Management' : 'Account Settings'}
-          </Text>
-          
-          {role === 'BUSINESS' && (
-            <>
-              <TouchableOpacity style={[styles.menuItem, { backgroundColor: theme.card }, Shadows.light]}>
-                <View style={[styles.iconBox, { backgroundColor: theme.business + '15' }]}>
-                  <Ionicons name="analytics-outline" size={22} color={theme.business} />
-                </View>
-                <Text style={[styles.menuText, { color: theme.text }]}>Expense Reports</Text>
-                <Ionicons name="chevron-forward" size={20} color={theme.border} />
-              </TouchableOpacity>
-              
-              <TouchableOpacity style={[styles.menuItem, { backgroundColor: theme.card }, Shadows.light]}>
-                <View style={[styles.iconBox, { backgroundColor: theme.business + '15' }]}>
-                  <Ionicons name="card-outline" size={22} color={theme.business} />
-                </View>
-                <Text style={[styles.menuText, { color: theme.text }]}>Escrow Bank Details</Text>
-                <Ionicons name="chevron-forward" size={20} color={theme.border} />
-              </TouchableOpacity>
-            </>
-          )}
-
-          <TouchableOpacity style={[styles.menuItem, { backgroundColor: theme.card }, Shadows.light]}>
-            <View style={[styles.iconBox, { backgroundColor: theme.worker + '15' }]}>
-              <Ionicons name="document-text-outline" size={22} color={theme.worker} />
+      <View style={styles.menuContainer}>
+        {menuItems.map((item, idx) => (
+          <TouchableOpacity key={idx} style={[styles.menuItem, { backgroundColor: theme.card, borderColor: theme.border }, Shadows.light]}>
+            <View style={[styles.iconBox, { backgroundColor: (item.badgeColor || accentColor) + '15' }]}>
+              <Ionicons name={item.icon as any} size={22} color={item.badgeColor || accentColor} />
             </View>
-            <Text style={[styles.menuText, { color: theme.text }]}>
-              {role === 'BUSINESS' ? 'Update KYC Documents' : 'Personal Information'}
-            </Text>
-            <Ionicons name="chevron-forward" size={20} color={theme.border} />
-          </TouchableOpacity>
-        </Animated.View>
-
-        <Animated.View entering={FadeInUp.delay(400).duration(800)} style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>Preferences</Text>
-          <TouchableOpacity style={[styles.menuItem, { backgroundColor: theme.card }, Shadows.light]}>
-            <View style={[styles.iconBox, { backgroundColor: '#FF950015' }]}>
-              <Ionicons name="notifications-outline" size={22} color="#FF9500" />
+            <View style={styles.menuContent}>
+              <Text style={[styles.menuLabel, { color: theme.text }]}>{item.label}</Text>
+              <Text style={[styles.menuSub, { color: theme.muted }]}>{item.sub}</Text>
             </View>
-            <Text style={[styles.menuText, { color: theme.text }]}>Notifications</Text>
-            <Ionicons name="chevron-forward" size={20} color={theme.border} />
+            <Ionicons name="chevron-forward" size={20} color={theme.muted} />
           </TouchableOpacity>
-          
-          <TouchableOpacity style={[styles.menuItem, { backgroundColor: theme.card }, Shadows.light]}>
-            <View style={[styles.iconBox, { backgroundColor: '#5856D615' }]}>
-              <Ionicons name="help-circle-outline" size={22} color="#5856D6" />
-            </View>
-            <Text style={[styles.menuText, { color: theme.text }]}>Help Center</Text>
-            <Ionicons name="chevron-forward" size={20} color={theme.border} />
-          </TouchableOpacity>
-        </Animated.View>
+        ))}
 
-        <Animated.View entering={FadeInUp.delay(600).duration(800)} style={styles.logoutSection}>
-          <ModernButton 
-            title="Log Out" 
-            onPress={handleLogout} 
-            style={styles.logoutButton}
-            variant="default"
-          />
-          <Text style={[styles.versionText, { color: theme.muted }]}>Version 1.0.0</Text>
-        </Animated.View>
+        <TouchableOpacity 
+          onPress={logout}
+          style={[styles.logoutBtn, { borderColor: theme.danger }]}
+        >
+          <Text style={[styles.logoutText, { color: theme.danger }]}>TERMINATE SESSION</Text>
+        </TouchableOpacity>
       </View>
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-  },
-  header: {
-    paddingTop: 60,
-    paddingBottom: 30,
-    alignItems: 'center',
-  },
-  profileHeader: {
-    alignItems: 'center',
-  },
-  avatarContainer: {
-    width: 110,
-    height: 110,
-    borderRadius: 55,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginBottom: 16,
-    position: 'relative',
-  },
-  verifiedBadge: {
-    position: 'absolute',
-    bottom: 5,
-    right: 5,
-    width: 24,
-    height: 24,
-    borderRadius: 12,
-    borderWidth: 3,
-    borderColor: '#fff',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  userName: {
-    fontSize: 24,
-    fontWeight: '800',
-    marginBottom: 4,
-  },
-  userRole: {
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  content: {
-    paddingHorizontal: 24,
-    paddingBottom: 120,
-  },
-  section: {
-    marginBottom: 32,
-  },
-  sectionTitle: {
-    fontSize: 18,
-    fontWeight: '700',
-    marginBottom: 16,
-    marginLeft: 4,
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 16,
-    borderRadius: 20,
-    marginBottom: 12,
-  },
-  iconBox: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginRight: 16,
-  },
-  menuText: {
-    flex: 1,
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  logoutSection: {
-    marginTop: 8,
-    alignItems: 'center',
-  },
-  logoutButton: {
-    width: '100%',
-    backgroundColor: '#FF3B30',
-  },
-  versionText: {
-    marginTop: 20,
-    fontSize: 12,
-    fontWeight: '500',
-  },
+  container: { flex: 1 },
+  header: { padding: 40, alignItems: 'center', borderBottomLeftRadius: 32, borderBottomRightRadius: 32, marginBottom: 24 },
+  avatarContainer: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, justifyContent: 'center', alignItems: 'center', position: 'relative', marginBottom: 16 },
+  verifiedBadge: { position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center', borderWidth: 2 },
+  name: { fontSize: 20, fontWeight: '900', letterSpacing: 1 },
+  role: { fontSize: 12, fontWeight: '800', marginTop: 4, letterSpacing: 0.5 },
+  menuContainer: { padding: 20, gap: 12 },
+  menuItem: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16, borderWidth: 1 },
+  iconBox: { width: 44, height: 44, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginRight: 16 },
+  menuContent: { flex: 1 },
+  menuLabel: { fontSize: 15, fontWeight: '700' },
+  menuSub: { fontSize: 12, marginTop: 2, fontWeight: '600' },
+  logoutBtn: { marginTop: 20, padding: 18, borderRadius: 16, borderWidth: 1.5, alignItems: 'center' },
+  logoutText: { fontSize: 12, fontWeight: '900', letterSpacing: 2 }
 });

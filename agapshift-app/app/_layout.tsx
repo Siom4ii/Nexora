@@ -19,7 +19,8 @@ export default function RootLayout() {
         <Stack>
           <Stack.Screen name="index" options={{ headerShown: false }} />
           <Stack.Screen name="login" options={{ headerShown: false }} />
-          <Stack.Screen name="(auth)/kyc-verification" options={{ headerShown: true, title: 'Identity Verification' }} />
+          <Stack.Screen name="(auth)/business-registration" options={{ headerShown: false }} />
+          <Stack.Screen name="(auth)/kyc-verification" options={{ headerShown: false, title: 'Identity Verification' }} />
           <Stack.Screen name="(auth)/business-localization" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)/financial-setup" options={{ headerShown: false }} />
           <Stack.Screen name="(auth)/worker-profile" options={{ headerShown: false }} />

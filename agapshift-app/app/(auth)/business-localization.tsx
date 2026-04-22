@@ -29,7 +29,7 @@ export default function BusinessLocalizationScreen() {
         <Ionicons name="map" size={64} color={theme.business} style={{ opacity: 0.2 }} />
         <View style={styles.pinContainer}>
           <View style={[styles.pin, { backgroundColor: theme.business }]}>
-            <Ionicons name="business" size={24} color="#fff" />
+            <Ionicons name="business" size={24} color={theme.white} />
           </View>
           <View style={[styles.pinShadow, { backgroundColor: theme.business + '40' }]} />
         </View>
@@ -104,7 +104,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: '#E0E0E0',
+    backgroundColor: '#E9ECEF',
     alignSelf: 'center',
     marginBottom: 20,
   },

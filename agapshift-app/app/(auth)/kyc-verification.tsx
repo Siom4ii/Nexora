@@ -1,5 +1,5 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Modal, Alert, Platform } from 'react-native';
+import React, { useState, useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Modal, Platform, useColorScheme } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { Colors, Shadows } from '../../constants/theme';
@@ -18,20 +18,19 @@ if (Platform.OS !== 'web') {
 export default function KycVerificationScreen() {
   const router = useRouter();
   const { role, verifyKyc } = useAuth();
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
   
-  const bgColor = '#F8FAFC';
-  const accentBlue = '#0062FF';
-  const mutedText = '#64748B';
-  const inputBg = '#FFFFFF';
-  const borderColor = '#E2E8F0';
+  const accentColor = role === 'WORKER' ? theme.worker : theme.business;
 
   const [fullName, setFullName] = useState('');
   const [dob, setDob] = useState('');
   const [dateObj, setDateObj] = useState(new Date(2000, 0, 1));
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [isAgeValid, setIsAgeValid] = useState(false);
 
   // Address State
-  const [province, setProvince] = useState('');
+  const [province, setProvince] = useState('11-1'); // Pre-select Davao del Sur
   const [municipality, setMunicipality] = useState('');
   const [barangay, setBarangay] = useState('');
   
@@ -40,10 +39,23 @@ export default function KycVerificationScreen() {
   const [showFaceCheck, setShowFaceCheck] = useState(false);
   const [agreedToPrivacy, setAgreedToPrivacy] = useState(false);
 
+  // Constants for Age Validation
+  const today = new Date();
+  const eighteenYearsAgo = new Date(today.getFullYear() - 18, today.getMonth(), today.getDate());
+
+  const validateAge = (birthDate: Date) => {
+    const age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    const isOver18 = age > 18 || (age === 18 && (monthDiff > 0 || (monthDiff === 0 && today.getDate() >= birthDate.getDate())));
+    setIsAgeValid(isOver18);
+    return isOver18;
+  };
+
   // Validation
   const isFormComplete = 
     fullName.length > 3 &&
     dob !== '' &&
+    isAgeValid &&
     province !== '' &&
     municipality !== '' &&
     barangay !== '' &&
@@ -56,15 +68,18 @@ export default function KycVerificationScreen() {
       const formatted = `${(selectedDate.getMonth() + 1).toString().padStart(2, '0')}/${selectedDate.getDate().toString().padStart(2, '0')}/${selectedDate.getFullYear()}`;
       setDob(formatted);
       setDateObj(selectedDate);
+      validateAge(selectedDate);
     }
   };
 
   const handleWebDateChange = (e: any) => {
     const val = e.target.value; 
     if (val) {
+      const selectedDate = new Date(val);
       const [y, m, d] = val.split('-');
       setDob(`${m}/${d}/${y}`);
-      setDateObj(new Date(val));
+      setDateObj(selectedDate);
+      validateAge(selectedDate);
     }
   };
 
@@ -79,12 +94,12 @@ export default function KycVerificationScreen() {
 
   const renderDropdown = (label: string, value: string, setValue: (v: string) => void, data: any[], disabled: boolean) => (
     <View style={[styles.inputGroup, { opacity: disabled ? 0.4 : 1 }]}>
-      <Text style={styles.inputLabel}>{label.toUpperCase()}</Text>
+      <Text style={[styles.inputLabel, { color: theme.muted }]}>{label.toUpperCase()}</Text>
       <View style={[
         styles.dropdownContainer, 
         { 
-          backgroundColor: inputBg, 
-          borderColor: value ? accentBlue : borderColor,
+          backgroundColor: theme.card, 
+          borderColor: value ? accentColor : theme.border,
           borderWidth: value ? 2 : 1.5 
         }
       ]}>
@@ -95,42 +110,42 @@ export default function KycVerificationScreen() {
           style={{
             width: '100%', height: 50, border: 'none', background: 'transparent',
             padding: '0 15px', fontSize: 15, outline: 'none', appearance: 'none',
-            cursor: disabled ? 'default' : 'pointer', color: '#1E293B', fontWeight: '600'
+            cursor: disabled ? 'default' : 'pointer', color: theme.text, fontWeight: '600'
           }}
         >
           <option value="">Select {label}</option>
           {data.map(item => <option key={item.id} value={item.id}>{item.name}</option>)}
         </select>
-        <Ionicons name="chevron-down" size={18} color={value ? accentBlue : mutedText} style={styles.dropdownIcon} />
+        <Ionicons name="chevron-down" size={18} color={value ? accentColor : theme.muted} style={styles.dropdownIcon} />
       </View>
     </View>
   );
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: bgColor }]}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.content}>
         <Animated.View entering={FadeInDown.duration(600)}>
-          <Text style={styles.headerTitle}>Identity Verification</Text>
-          <Text style={styles.headerSubtitle}>Complete your profile with Davao Region credentials.</Text>
+          <Text style={[styles.headerTitle, { color: theme.text }]}>Identity Verification</Text>
+          <Text style={[styles.headerSubtitle, { color: theme.muted }]}>Complete your profile. Currently exclusive to Davao del Sur residents.</Text>
         </Animated.View>
 
         <View style={styles.formSection}>
           {/* Full Name */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>FULL NAME</Text>
+            <Text style={[styles.inputLabel, { color: theme.muted }]}>FULL NAME</Text>
             <View style={[
               styles.inputWrapper, 
               { 
-                backgroundColor: inputBg, 
-                borderColor: fullName.length > 3 ? accentBlue : borderColor,
+                backgroundColor: theme.card, 
+                borderColor: fullName.length > 3 ? accentColor : theme.border,
                 borderWidth: fullName.length > 3 ? 2 : 1.5 
               }
             ]}>
-              <Ionicons name="person" size={18} color={fullName.length > 3 ? accentBlue : mutedText} style={styles.fieldIcon} />
+              <Ionicons name="person" size={18} color={fullName.length > 3 ? accentColor : theme.muted} style={styles.fieldIcon} />
               <TextInput 
-                style={styles.textInput}
+                style={[styles.textInput, { color: theme.text }]}
                 placeholder="e.g. Juan Dela Cruz"
-                placeholderTextColor="#94A3B8"
+                placeholderTextColor={theme.muted}
                 value={fullName}
                 onChangeText={setFullName}
               />
@@ -139,30 +154,28 @@ export default function KycVerificationScreen() {
 
           {/* Birthdate - Robust Web/Mobile Implementation */}
           <View style={styles.inputGroup}>
-            <Text style={styles.inputLabel}>DATE OF BIRTH</Text>
+            <Text style={[styles.inputLabel, { color: theme.muted }]}>DATE OF BIRTH</Text>
             <TouchableOpacity 
               activeOpacity={0.7}
               onPress={() => {
-                if (Platform.OS === 'web') {
-                  // Web: Logic handled by the hidden input or ref
-                } else {
+                if (Platform.OS !== 'web') {
                   setShowDatePicker(true);
                 }
               }}
               style={[
                 styles.inputWrapper, 
                 { 
-                  backgroundColor: inputBg, 
-                  borderColor: dob ? accentBlue : borderColor,
+                  backgroundColor: theme.card, 
+                  borderColor: dob ? accentColor : theme.border,
                   borderWidth: dob ? 2 : 1.5 
                 }
               ]}
             >
-              <Ionicons name="calendar" size={18} color={dob ? accentBlue : mutedText} style={styles.fieldIcon} />
+              <Ionicons name="calendar" size={18} color={dob ? accentColor : theme.muted} style={styles.fieldIcon} />
               
               {Platform.OS === 'web' ? (
                 <div style={{ flex: 1, display: 'flex', alignItems: 'center', height: '100%', position: 'relative' }}>
-                  <Text style={[styles.dateText, { color: dob ? '#1E293B' : '#94A3B8' }]}>
+                  <Text style={[styles.dateText, { color: dob ? theme.text : theme.muted }]}>
                     {dob || 'MM/DD/YYYY'}
                   </Text>
                   <input
@@ -172,6 +185,7 @@ export default function KycVerificationScreen() {
                       opacity: 0, cursor: 'pointer', width: '200%', height: '100%'
                     }}
                     onChange={handleWebDateChange}
+                    max={eighteenYearsAgo.toISOString().split('T')[0]}
                     onClick={(e) => {
                       // Ensure the native picker opens
                       if ('showPicker' in e.currentTarget) {
@@ -182,25 +196,25 @@ export default function KycVerificationScreen() {
                 </div>
               ) : (
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.dateText, { color: dob ? '#1E293B' : '#94A3B8' }]}>
+                  <Text style={[styles.dateText, { color: dob ? theme.text : theme.muted }]}>
                     {dob || 'MM/DD/YYYY'}
                   </Text>
                 </View>
               )}
               
-              <View style={styles.pickerHint}>
-                <Text style={[styles.hintText, { color: accentBlue }]}>SELECT</Text>
+              <View style={[styles.pickerHint, { backgroundColor: theme.background }]}>
+                <Text style={[styles.hintText, { color: accentColor }]}>SELECT</Text>
               </View>
             </TouchableOpacity>
           </View>
 
-          <Text style={styles.sectionDivider}>RESIDENTIAL ADDRESS (REGION XI)</Text>
+          <Text style={[styles.sectionDivider, { color: theme.muted }]}>RESIDENTIAL ADDRESS (DAVAO DEL SUR)</Text>
           
           <View style={[styles.inputGroup, { opacity: 0.8 }]}>
-            <Text style={styles.inputLabel}>REGION</Text>
-            <View style={[styles.inputWrapper, { backgroundColor: '#F1F5F9', borderColor: '#E2E8F0' }]}>
-              <Ionicons name="map" size={18} color={mutedText} style={styles.fieldIcon} />
-              <Text style={[styles.dateText, { color: '#1E293B' }]}>{DAVAO_DATA.region.name}</Text>
+            <Text style={[styles.inputLabel, { color: theme.muted }]}>REGION</Text>
+            <View style={[styles.inputWrapper, { backgroundColor: theme.background, borderColor: theme.border }]}>
+              <Ionicons name="map" size={18} color={theme.muted} style={styles.fieldIcon} />
+              <Text style={[styles.dateText, { color: theme.text }]}>{DAVAO_DATA.region.name}</Text>
             </View>
           </View>
 
@@ -208,7 +222,7 @@ export default function KycVerificationScreen() {
           {renderDropdown('Municipality', municipality, (v) => { setMunicipality(v); setBarangay(''); }, DAVAO_DATA.municipalities[province as keyof typeof DAVAO_DATA.municipalities] || [], !province)}
           {renderDropdown('Barangay', barangay, (v) => setBarangay(v), DAVAO_DATA.barangays[municipality as keyof typeof DAVAO_DATA.barangays] || [], !municipality)}
 
-          <Text style={styles.sectionDivider}>DOCUMENTATION</Text>
+          <Text style={[styles.sectionDivider, { color: theme.muted }]}>DOCUMENTATION</Text>
           <TouchableOpacity 
             onPress={() => {
               setIdUploaded(true);
@@ -217,17 +231,17 @@ export default function KycVerificationScreen() {
             style={[
               styles.uploadZone, 
               { 
-                borderColor: idUploaded ? accentBlue : '#CBD5E1', 
-                backgroundColor: idUploaded ? '#F0F7FF' : '#F8FAFC',
+                borderColor: idUploaded ? accentColor : theme.border, 
+                backgroundColor: idUploaded ? (role === 'WORKER' ? theme.worker + '10' : theme.business + '10') : theme.background,
                 borderWidth: 2 
               }
             ]}
           >
-            <Ionicons name={idUploaded ? "checkmark-circle" : "cloud-upload"} size={32} color={idUploaded ? accentBlue : '#94A3B8'} />
-            <Text style={[styles.uploadTitle, { color: idUploaded ? accentBlue : '#1E293B' }]}>
+            <Ionicons name={idUploaded ? "checkmark-circle" : "cloud-upload"} size={32} color={idUploaded ? accentColor : theme.muted} />
+            <Text style={[styles.uploadTitle, { color: idUploaded ? accentColor : theme.text }]}>
               {idUploaded ? 'ID CAPTURED SUCCESSFULLY' : 'UPLOAD GOVERNMENT ID'}
             </Text>
-            <Text style={styles.uploadSub}>Tap to open camera or select file</Text>
+            <Text style={[styles.uploadSub, { color: theme.muted }]}>Tap to open camera or select file</Text>
           </TouchableOpacity>
 
           <TouchableOpacity 
@@ -235,11 +249,11 @@ export default function KycVerificationScreen() {
             onPress={() => setAgreedToPrivacy(!agreedToPrivacy)}
             activeOpacity={0.7}
           >
-            <View style={[styles.checkbox, { borderColor: agreedToPrivacy ? accentBlue : '#CBD5E1', backgroundColor: agreedToPrivacy ? accentBlue : 'transparent' }]}>
-              {agreedToPrivacy && <Ionicons name="checkmark" size={14} color="#fff" />}
+            <View style={[styles.checkbox, { borderColor: agreedToPrivacy ? accentColor : theme.border, backgroundColor: agreedToPrivacy ? accentColor : 'transparent' }]}>
+              {agreedToPrivacy && <Ionicons name="checkmark" size={14} color={theme.white} />}
             </View>
-            <Text style={styles.checkboxLabel}>
-              I authorize AgapShift to process my personal data and identity documents for verification in accordance with the <Text onPress={() => router.push('/privacy')} style={{ color: accentBlue, fontWeight: '800', textDecorationLine: 'underline' }}>Data Privacy Act of 2012</Text> and AgapShift's <Text onPress={() => router.push('/terms')} style={{ color: accentBlue, fontWeight: '800', textDecorationLine: 'underline' }}>Terms</Text>.
+            <Text style={[styles.checkboxLabel, { color: theme.text }]}>
+              I authorize AgapShift to process my personal data and identity documents for verification in accordance with the <Text onPress={() => router.push('/privacy')} style={{ color: accentColor, fontWeight: '800', textDecorationLine: 'underline' }}>Data Privacy Act of 2012</Text> and AgapShift&apos;s <Text onPress={() => router.push('/terms')} style={{ color: accentColor, fontWeight: '800', textDecorationLine: 'underline' }}>Terms</Text>.
             </Text>
           </TouchableOpacity>
 
@@ -249,15 +263,15 @@ export default function KycVerificationScreen() {
               if (Platform.OS !== 'web') Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
               setShowFaceCheck(true);
             }}
+            variant={role === 'BUSINESS' ? 'business' : 'worker'}
             disabled={!isFormComplete}
-            style={{ marginTop: 24, backgroundColor: isFormComplete ? accentBlue : '#CBD5E1', borderRadius: 14 }}
-            textStyle={{ letterSpacing: 1, fontWeight: '800' }}
+            style={{ marginTop: 24 }}
           />
           
           {!isFormComplete && (
             <View style={styles.errorRow}>
-              <Ionicons name="information-circle" size={14} color="#EF4444" />
-              <Text style={styles.errorNote}>Required: Name, DOB, Address, and ID Scan.</Text>
+              <Ionicons name="information-circle" size={14} color={theme.danger} />
+              <Text style={[styles.errorNote, { color: theme.danger }]}>Required: Name, DOB (Must be 18+), Address, and ID Scan.</Text>
             </View>
           )}
         </View>
@@ -265,19 +279,20 @@ export default function KycVerificationScreen() {
 
       <Modal visible={showFaceCheck} transparent animationType="fade">
         <View style={styles.modalOverlay}>
-          <View style={styles.faceCheckContainer}>
-            <Text style={styles.modalTitle}>Liveness Check</Text>
-            <Text style={styles.modalSub}>Position your face within the circle and blink slowly.</Text>
-            <View style={[styles.cameraCircle, { borderColor: accentBlue }]}>
-              <View style={[styles.cameraDot, { backgroundColor: accentBlue }]} />
+          <View style={[styles.faceCheckContainer, { backgroundColor: theme.card }]}>
+            <Text style={[styles.modalTitle, { color: theme.text }]}>Liveness Check</Text>
+            <Text style={[styles.modalSub, { color: theme.muted }]}>Position your face within the circle and blink slowly.</Text>
+            <View style={[styles.cameraCircle, { borderColor: accentColor }]}>
+              <View style={[styles.cameraDot, { backgroundColor: accentColor }]} />
             </View>
             <ModernButton 
               title="CAPTURE & SUBMIT" 
               onPress={() => { setShowFaceCheck(false); handleSubmit(); }}
-              style={{ width: '80%', marginTop: 40, backgroundColor: accentBlue, borderRadius: 14 }}
+              variant={role === 'BUSINESS' ? 'business' : 'worker'}
+              style={{ width: '80%', marginTop: 40 }}
             />
             <TouchableOpacity onPress={() => setShowFaceCheck(false)} style={styles.cancelBtn}>
-              <Text style={{ color: mutedText, fontWeight: '700', letterSpacing: 0.5 }}>CANCEL</Text>
+              <Text style={{ color: theme.muted, fontWeight: '700', letterSpacing: 0.5 }}>CANCEL</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -289,7 +304,7 @@ export default function KycVerificationScreen() {
           mode="date"
           display="default"
           onChange={onDateChange}
-          maximumDate={new Date()}
+          maximumDate={eighteenYearsAgo}
         />
       )}
     </ScrollView>
@@ -299,11 +314,11 @@ export default function KycVerificationScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1 },
   content: { padding: 24, paddingTop: 60, paddingBottom: 100 },
-  headerTitle: { fontSize: 32, fontWeight: '900', color: '#1E293B', marginBottom: 8, letterSpacing: -0.5 },
-  headerSubtitle: { fontSize: 16, color: '#64748B', lineHeight: 24, marginBottom: 40 },
+  headerTitle: { fontSize: 32, fontWeight: '900', marginBottom: 8, letterSpacing: -0.5 },
+  headerSubtitle: { fontSize: 16, lineHeight: 24, marginBottom: 40 },
   formSection: { gap: 24 },
   inputGroup: { width: '100%' },
-  inputLabel: { fontSize: 10, fontWeight: '800', color: '#64748B', marginBottom: 8, letterSpacing: 1.5 },
+  inputLabel: { fontSize: 10, fontWeight: '800', marginBottom: 8, letterSpacing: 1.5 },
   inputWrapper: {
     height: 60,
     borderRadius: 14,
@@ -314,11 +329,11 @@ const styles = StyleSheet.create({
     ...Shadows.light
   },
   fieldIcon: { marginRight: 12 },
-  textInput: { flex: 1, fontSize: 16, fontWeight: '600', color: '#1E293B' },
+  textInput: { flex: 1, fontSize: 16, fontWeight: '600' },
   dateText: { fontSize: 16, fontWeight: '600' },
-  pickerHint: { backgroundColor: '#F1F5F9', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  pickerHint: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   hintText: { fontSize: 10, fontWeight: '900' },
-  sectionDivider: { fontSize: 11, fontWeight: '900', color: '#94A3B8', marginTop: 16, marginBottom: -8, letterSpacing: 2 },
+  sectionDivider: { fontSize: 11, fontWeight: '900', marginTop: 16, marginBottom: -8, letterSpacing: 2 },
   dropdownContainer: {
     height: 60,
     borderRadius: 14,
@@ -339,19 +354,19 @@ const styles = StyleSheet.create({
     ...Shadows.light
   },
   uploadTitle: { fontSize: 14, fontWeight: '900', marginTop: 16, letterSpacing: 1 },
-  uploadSub: { fontSize: 13, color: '#64748B', marginTop: 6, fontWeight: '500' },
+  uploadSub: { fontSize: 13, marginTop: 6, fontWeight: '500' },
   checkboxContainer: { flexDirection: 'row', alignItems: 'flex-start', marginTop: 16, gap: 12 },
   checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 2, justifyContent: 'center', alignItems: 'center', marginTop: 2 },
-  checkboxLabel: { flex: 1, fontSize: 12, lineHeight: 18, color: '#475569', fontWeight: '600' },
+  checkboxLabel: { flex: 1, fontSize: 12, lineHeight: 18, fontWeight: '600' },
   errorRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 12 },
-  errorNote: { color: '#EF4444', fontSize: 12, fontWeight: '700' },
+  errorNote: { fontSize: 12, fontWeight: '700' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.95)', justifyContent: 'center', alignItems: 'center' },
   faceCheckContainer: { 
-    width: '90%', height: '75%', backgroundColor: '#fff', borderRadius: 40, 
+    width: '90%', height: '75%', borderRadius: 40, 
     alignItems: 'center', padding: 32, justifyContent: 'center' 
   },
-  modalTitle: { fontSize: 26, fontWeight: '900', color: '#1E293B', letterSpacing: -0.5 },
-  modalSub: { fontSize: 15, color: '#64748B', textAlign: 'center', marginTop: 12, marginBottom: 48, lineHeight: 22 },
+  modalTitle: { fontSize: 26, fontWeight: '900', letterSpacing: -0.5 },
+  modalSub: { fontSize: 15, textAlign: 'center', marginTop: 12, marginBottom: 48, lineHeight: 22 },
   cameraCircle: { width: 280, height: 280, borderRadius: 140, borderWidth: 4, borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center' },
   cameraDot: { position: 'absolute', top: 20, width: 12, height: 12, borderRadius: 6 },
   cancelBtn: { marginTop: 24, padding: 12 }

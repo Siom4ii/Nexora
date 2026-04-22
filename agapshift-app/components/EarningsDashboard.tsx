@@ -1,51 +1,54 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, useColorScheme } from 'react-native';
+import { Colors, Shadows } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
-export default function EarningsDashboard() {
+export function EarningsDashboard() {
+  const colorScheme = useColorScheme() ?? 'light';
+  const theme = Colors[colorScheme];
   const { role } = useAuth();
+  const isBusiness = role === 'BUSINESS';
+
+  const accentColor = isBusiness ? theme.business : theme.worker;
 
   return (
-    <ScrollView style={styles.container}>
-      {role === 'WORKER' ? (
-        <>
-          <View style={styles.headerCard}>
-            <Text style={styles.cardTitle}>Total Earnings</Text>
-            <Text style={styles.amount}>₱4,500.00</Text>
-            <Text style={styles.subtext}>Available in Wallet (GCash Connected)</Text>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
+      <View style={[styles.headerCard, { backgroundColor: accentColor }, Shadows.medium]}>
+        <Text style={[styles.cardTitle, { color: theme.white }]}>
+          {isBusiness ? 'Total Hiring Expenses' : 'Total Earnings'}
+        </Text>
+        <Text style={[styles.amount, { color: theme.white }]}>
+          {isBusiness ? '₱12,000.00' : '₱8,450.00'}
+        </Text>
+      </View>
+
+      <Text style={[styles.sectionTitle, { color: theme.text }]}>Transaction History</Text>
+      
+      {[1, 2, 3].map((i) => (
+        <View key={i} style={[styles.historyCard, { backgroundColor: theme.card, borderColor: theme.border, borderWidth: 1 }, Shadows.light]}>
+          <View>
+            <Text style={[styles.historyTitle, { color: theme.text }]}>
+              {isBusiness ? 'Shift Payment #824' : 'Completed Shift'}
+            </Text>
+            <Text style={[styles.historyDate, { color: theme.muted }]}>April 22, 2026</Text>
           </View>
-          <Text style={styles.sectionTitle}>Recent Shifts</Text>
-          <View style={styles.historyCard}>
-            <Text style={styles.historyJob}>Barista (4 hrs)</Text>
-            <Text style={styles.historyAmount}>+₱500.00</Text>
-          </View>
-        </>
-      ) : (
-        <>
-          <View style={[styles.headerCard, { backgroundColor: '#FF3B30' }]}>
-            <Text style={[styles.cardTitle, { color: '#fff' }]}>Total Hiring Expenses</Text>
-            <Text style={[styles.amount, { color: '#fff' }]}>₱12,000.00</Text>
-            <Text style={[styles.subtext, { color: 'rgba(255,255,255,0.8)' }]}>This Month</Text>
-          </View>
-          <Text style={styles.sectionTitle}>Escrow History</Text>
-          <View style={styles.historyCard}>
-            <Text style={styles.historyJob}>Paid: Juan Dela Cruz</Text>
-            <Text style={[styles.historyAmount, { color: '#FF3B30' }]}>-₱500.00</Text>
-          </View>
-        </>
-      )}
+          <Text style={[styles.historyAmount, { color: isBusiness ? theme.danger : theme.success }]}>
+            {isBusiness ? '-₱500.00' : '+₱500.00'}
+          </Text>
+        </View>
+      ))}
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5', padding: 20 },
-  headerCard: { backgroundColor: '#34C759', padding: 25, borderRadius: 12, alignItems: 'center', marginBottom: 30 },
-  cardTitle: { fontSize: 16, color: '#fff', fontWeight: 'bold' },
-  amount: { fontSize: 40, fontWeight: 'bold', color: '#fff', marginVertical: 10 },
-  subtext: { fontSize: 14, color: 'rgba(255,255,255,0.8)' },
-  sectionTitle: { fontSize: 18, fontWeight: 'bold', marginBottom: 15 },
-  historyCard: { backgroundColor: '#fff', padding: 15, borderRadius: 8, flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
-  historyJob: { fontSize: 16, fontWeight: 'bold' },
-  historyAmount: { fontSize: 16, fontWeight: 'bold', color: '#34C759' }
+  container: { flex: 1, padding: 20 },
+  headerCard: { padding: 25, borderRadius: 12, alignItems: 'center', marginBottom: 30 },
+  cardTitle: { fontSize: 16, fontWeight: 'bold' },
+  amount: { fontSize: 40, fontWeight: 'bold', marginVertical: 10 },
+  sectionTitle: { fontSize: 18, fontWeight: '800', marginBottom: 20, letterSpacing: 1 },
+  historyCard: { padding: 15, borderRadius: 8, flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 },
+  historyTitle: { fontSize: 15, fontWeight: '700' },
+  historyDate: { fontSize: 12, marginTop: 4 },
+  historyAmount: { fontSize: 16, fontWeight: 'bold' }
 });

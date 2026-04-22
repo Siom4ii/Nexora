@@ -69,7 +69,7 @@ export default function WorkerProfileScreen() {
       <View style={styles.content}>
         <Animated.View entering={FadeInUp.duration(800)}>
           <Text style={[styles.title, { color: theme.text }]}>DIGITAL RESUME</Text>
-          <Text style={[styles.subtitle, { color: theme.muted }]}>// MAPPING CORE COMPETENCIES</Text>
+          <Text style={[styles.subtitle, { color: theme.muted }]}>MAPPING CORE COMPETENCIES</Text>
         </Animated.View>
 
         <View style={styles.section}>
@@ -143,7 +143,7 @@ export default function WorkerProfileScreen() {
                 onSubmitEditing={addCustomSkill}
               />
               <TouchableOpacity onPress={addCustomSkill} style={[styles.addBtn, { backgroundColor: theme.worker }]}>
-                <Ionicons name="add" size={24} color="#fff" />
+                <Ionicons name="add" size={24} color={theme.white} />
               </TouchableOpacity>
               <TouchableOpacity onPress={() => setShowCustomInput(false)} style={{ padding: 10 }}>
                 <Ionicons name="close" size={24} color={theme.muted} />
@@ -178,7 +178,7 @@ export default function WorkerProfileScreen() {
               styles.cyberInput, 
               { 
                 color: theme.text, 
-                borderColor: emergencyError ? '#FF3B30' : theme.border, 
+                borderColor: emergencyError ? theme.danger : theme.border, 
                 marginTop: 12,
                 borderBottomWidth: emergencyError ? 2 : 1
               }
@@ -190,7 +190,7 @@ export default function WorkerProfileScreen() {
             value={emergency.number}
             onChangeText={handleEmergencyNumberChange}
           />
-          {emergencyError && <Text style={{ color: '#FF3B30', fontSize: 10, fontWeight: '700', marginTop: 8 }}>{emergencyError}</Text>}
+          {emergencyError && <Text style={{ color: theme.danger, fontSize: 10, fontWeight: '700', marginTop: 8 }}>{emergencyError}</Text>}
         </View>
 
         <ModernButton 

@@ -32,8 +32,22 @@ AgapShift is a dual-platform mobile application built with React Native and Expo
 - **NO Inline Heavy Logic**: Keep screen files focused on UI and interaction; delegate complex calculations or data fetching to services.
 
 ## 5. Building & Validation
-- **Install**: `npm install` (within `agapshift-app`)
-- **Run (Web)**: `npx expo start --web`
+### How to Run (Web) - Step by Step
+1.  **Navigate to the App Directory**:
+    ```bash
+    cd agapshift-app
+    ```
+2.  **Install Dependencies**: (First time or when `package.json` changes)
+    ```bash
+    npm install
+    ```
+3.  **Start the Expo Server**:
+    ```bash
+    npx expo start --web
+    ```
+    *This will bundle the application and automatically open your default browser to `http://localhost:8081`.*
+
+### Other Commands
 - **Run (Android)**: `npx expo start --android`
 - **Linting**: `npm run lint`
 - **Validation**: Every new feature or bug fix MUST be verified in web mode at a minimum.

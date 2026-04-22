@@ -1,8 +1,8 @@
 import React from 'react';
-import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, useColorScheme, ViewStyle, TextStyle } from 'react-native';
+import { TouchableOpacity, Text, StyleSheet, ActivityIndicator, useColorScheme, ViewStyle, TextStyle, Platform } from 'react-native';
 import { Colors, Shadows } from '../../constants/theme';
 import * as Haptics from 'expo-haptics';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, interpolateColor } from 'react-native-reanimated';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
 interface ModernButtonProps {
   title: string;
@@ -46,7 +46,9 @@ export function ModernButton({
   };
 
   const handlePress = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    }
     onPress();
   };
 
@@ -71,11 +73,11 @@ export function ModernButton({
       activeOpacity={1}
     >
       {loading ? (
-        <ActivityIndicator color={isDark ? accentColor : "#fff"} />
+        <ActivityIndicator color={isDark ? accentColor : theme.white} />
       ) : (
         <Text style={[
           styles.text, 
-          { color: isDark ? accentColor : "#fff" },
+          { color: isDark ? accentColor : theme.white },
           textStyle
         ]}>{title.toUpperCase()}</Text>
       )}

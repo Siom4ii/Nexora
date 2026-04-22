@@ -16,10 +16,39 @@ export default function FinancialSetupScreen() {
   
   const [method, setMethod] = useState<'BANK' | 'EWALLET' | null>(null);
   const [loading, setLoading] = useState(false);
+  const [holderName, setHolderName] = useState('');
+  const [accountNumber, setAccountNumber] = useState('');
+  const [error, setError] = useState<string | null>(null);
 
   const accentColor = role === 'WORKER' ? theme.worker : theme.business;
 
+  const validate = () => {
+    if (!holderName.trim()) return false;
+    if (method === 'EWALLET') {
+      return accountNumber.length === 10 && accountNumber.startsWith('9');
+    }
+    return accountNumber.length >= 10;
+  };
+
+  const handleNumberChange = (val: string) => {
+    const numeric = val.replace(/[^0-9]/g, '');
+    if (method === 'EWALLET') {
+      setAccountNumber(numeric.slice(0, 10));
+      if (numeric.length > 0 && !numeric.startsWith('9')) {
+        setError('Mobile number must start with 9');
+      } else if (numeric.length > 0 && numeric.length < 10) {
+        setError('Enter 10-digit PH number');
+      } else {
+        setError(null);
+      }
+    } else {
+      setAccountNumber(numeric);
+      setError(null);
+    }
+  };
+
   const handleAuthorize = () => {
+    if (!validate()) return;
     setLoading(true);
     setTimeout(() => {
       login();
@@ -40,8 +69,8 @@ export default function FinancialSetupScreen() {
           </Text>
           <Text style={[styles.subtitle, { color: theme.muted }]}>
             {role === 'WORKER' 
-              ? '// WHERE SHOULD WE TRANSFER YOUR EARNINGS?' 
-              : '// LINK BUSINESS ACCOUNT TO FUEL ESCROW VAULT'}
+              ? 'WHERE SHOULD WE TRANSFER YOUR EARNINGS?' 
+              : 'LINK BUSINESS ACCOUNT TO FUEL ESCROW VAULT'}
           </Text>
         </Animated.View>
 
@@ -84,13 +113,28 @@ export default function FinancialSetupScreen() {
               style={[styles.cyberInput, { color: theme.text, borderColor: theme.border }]}
               placeholder="HOLDER NAME (E.G. JUAN DELA CRUZ)"
               placeholderTextColor={theme.muted}
+              value={holderName}
+              onChangeText={setHolderName}
             />
-            <TextInput 
-              style={[styles.cyberInput, { color: theme.text, borderColor: theme.border }]}
-              placeholder={method === 'BANK' ? "ACCOUNT_NUMBER" : "MOBILE_NUMBER"}
-              placeholderTextColor={theme.muted}
-              keyboardType="number-pad"
-            />
+            <View>
+              <TextInput 
+                style={[
+                  styles.cyberInput, 
+                  { 
+                    color: theme.text, 
+                    borderColor: error ? theme.danger : theme.border,
+                    borderBottomWidth: error ? 2 : 1
+                  }
+                ]}
+                placeholder={method === 'BANK' ? "ACCOUNT_NUMBER" : "MOBILE_NUMBER (E.G. 917 123 4567)"}
+                placeholderTextColor={theme.muted}
+                keyboardType="number-pad"
+                value={accountNumber}
+                onChangeText={handleNumberChange}
+                maxLength={method === 'EWALLET' ? 10 : 20}
+              />
+              {error && <Text style={styles.errorMessage}>{error}</Text>}
+            </View>
             
             {role === 'BUSINESS' && (
               <View style={styles.escrowConfig}>
@@ -112,8 +156,13 @@ export default function FinancialSetupScreen() {
               title={role === 'WORKER' ? "CONFIRM PAYOUT METHOD" : "AUTHORIZE & SECURE"} 
               onPress={handleAuthorize}
               loading={loading}
+              disabled={!validate()}
               variant={role === 'WORKER' ? 'worker' : 'business'}
-              style={{ marginTop: 32, marginBottom: 40 }}
+              style={{ 
+                marginTop: 32, 
+                marginBottom: 40,
+                backgroundColor: validate() ? accentColor : theme.border
+              }}
             />
           </Animated.View>
         )}
@@ -135,7 +184,8 @@ const styles = StyleSheet.create({
   form: { gap: 16 },
   sectionLabel: { fontSize: 11, fontWeight: '900', letterSpacing: 2, marginBottom: 4 },
   cyberInput: { padding: 18, borderBottomWidth: 1, fontSize: 15, fontWeight: '700', letterSpacing: 0.5 },
-  escrowConfig: { padding: 20, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.03)', marginTop: 10 },
+  errorMessage: { color: '#FF3B30', fontSize: 10, fontWeight: '700', marginTop: 8, marginLeft: 18 },
+  escrowConfig: { padding: 20, borderRadius: 16, backgroundColor: '#FFFFFF08', marginTop: 10 },
   escrowHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
   escrowTitle: { fontSize: 12, fontWeight: '900', letterSpacing: 1 },
   bufferOptions: { flexDirection: 'row', gap: 10 },

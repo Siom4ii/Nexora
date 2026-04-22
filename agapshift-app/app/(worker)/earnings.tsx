@@ -19,7 +19,7 @@ export default function WorkerEarningsScreen() {
     <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.text }]}>DIGITAL WALLET</Text>
-        <Text style={[styles.subtitle, { color: theme.muted }]}>// FINANCIAL DISBURSEMENT HUB</Text>
+        <Text style={[styles.subtitle, { color: theme.muted }]}>FINANCIAL DISBURSEMENT HUB</Text>
       </View>
 
       <View style={styles.content}>
@@ -27,15 +27,15 @@ export default function WorkerEarningsScreen() {
         <Animated.View entering={FadeInUp.duration(800)}>
           <View style={[styles.walletCard, { backgroundColor: isDark ? theme.worker + '10' : theme.worker }, Shadows.glow.worker]}>
             <View style={styles.walletHeader}>
-              <Text style={styles.walletLabel}>TOTAL AVAILABLE CREDITS</Text>
-              <Ionicons name="shield-checkmark" size={20} color={isDark ? theme.worker : "#fff"} />
+              <Text style={[styles.walletLabel, { color: theme.white + 'B3' }]}>TOTAL AVAILABLE CREDITS</Text>
+              <Ionicons name="shield-checkmark" size={20} color={isDark ? theme.worker : theme.white} />
             </View>
-            <Text style={[styles.balanceText, { color: isDark ? theme.worker : "#fff" }]}>
+            <Text style={[styles.balanceText, { color: isDark ? theme.worker : theme.white }]}>
               ₱{workerData.walletBalance.toLocaleString()}
             </Text>
             <View style={styles.walletFooter}>
-              <Text style={styles.payoutStatus}>PAYOUT READY: YES</Text>
-              <TouchableOpacity style={styles.transferBtn}>
+              <Text style={[styles.payoutStatus, { color: theme.white + '99' }]}>PAYOUT READY: YES</Text>
+              <TouchableOpacity style={[styles.transferBtn, { backgroundColor: theme.white }]}>
                 <Text style={[styles.transferText, { color: isDark ? theme.worker : theme.text }]}>WITHDRAW</Text>
               </TouchableOpacity>
             </View>
@@ -43,7 +43,7 @@ export default function WorkerEarningsScreen() {
         </Animated.View>
 
         <View style={styles.historySection}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>// TRANSACTION LOGS</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>TRANSACTION LOGS</Text>
           
           {completedJobs.length === 0 ? (
             <ElevatedCard style={styles.emptyCard}>
@@ -73,7 +73,7 @@ export default function WorkerEarningsScreen() {
                   </View>
                   <View style={styles.mathRow}>
                     <Text style={[styles.mathLabel, { color: theme.muted }]}>PLATFORM FEE (10%)</Text>
-                    <Text style={[styles.mathValue, { color: '#FF3B30' }]}>-₱{commission.toFixed(2)}</Text>
+                    <Text style={[styles.mathValue, { color: theme.danger }]}>-₱{commission.toFixed(2)}</Text>
                   </View>
                 </ElevatedCard>
               );
@@ -82,7 +82,7 @@ export default function WorkerEarningsScreen() {
         </View>
 
         <View style={styles.reputationSection}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>// REPUTATION METRICS</Text>
+          <Text style={[styles.sectionTitle, { color: theme.text }]}>REPUTATION METRICS</Text>
           <ElevatedCard style={styles.repCard}>
             <View style={styles.ratingRow}>
               <View>
@@ -94,9 +94,9 @@ export default function WorkerEarningsScreen() {
               </View>
             </View>
             <Text style={[styles.feedbackQuote, { color: theme.muted }]}>
-              "Worker was punctual and efficient. Highly recommended for logistics operations."
+              &quot;Worker was punctual and efficient. Highly recommended for logistics operations.&quot;
             </Text>
-            <Text style={[styles.feedbackAuthor, { color: theme.worker }]}>// ANONYMOUS ENTITY FEEDBACK</Text>
+            <Text style={[styles.feedbackAuthor, { color: theme.worker }]}>ANONYMOUS ENTITY FEEDBACK</Text>
           </ElevatedCard>
         </View>
       </View>
@@ -106,17 +106,17 @@ export default function WorkerEarningsScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  header: { padding: 24, paddingTop: 20 },
+  header: { padding: 24, paddingTop: 0, paddingBottom: 12 },
   title: { fontSize: 22, fontWeight: '900', letterSpacing: 2 },
   subtitle: { fontSize: 10, fontWeight: '800', marginTop: 4, letterSpacing: 1 },
   content: { flex: 1, paddingHorizontal: 20, paddingBottom: 120 },
   walletCard: { padding: 24, borderRadius: 20, minHeight: 180, justifyContent: 'space-between' },
   walletHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  walletLabel: { color: 'rgba(255,255,255,0.7)', fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  walletLabel: { fontSize: 10, fontWeight: '900', letterSpacing: 1 },
   balanceText: { fontSize: 42, fontWeight: '900', letterSpacing: -1 },
   walletFooter: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  payoutStatus: { color: 'rgba(255,255,255,0.6)', fontSize: 9, fontWeight: '800' },
-  transferBtn: { backgroundColor: '#fff', paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
+  payoutStatus: { fontSize: 9, fontWeight: '800' },
+  transferBtn: { paddingHorizontal: 16, paddingVertical: 8, borderRadius: 8 },
   transferText: { fontSize: 10, fontWeight: '900' },
   historySection: { marginTop: 40 },
   sectionTitle: { fontSize: 12, fontWeight: '900', letterSpacing: 2, marginBottom: 20 },

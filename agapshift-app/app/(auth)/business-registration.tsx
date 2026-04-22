@@ -11,7 +11,7 @@ type RegType = 'SOLE_PROP' | 'PARTNERSHIP' | 'CORPORATION' | null;
 
 export default function BusinessRegistrationScreen() {
   const router = useRouter();
-  const { updateBusinessData, verifyKyc } = useAuth();
+  const { updateBusinessData } = useAuth();
   const colorScheme = useColorScheme() ?? 'light';
   const theme = Colors[colorScheme];
   
@@ -19,11 +19,33 @@ export default function BusinessRegistrationScreen() {
   const [formData, setFormData] = useState<any>({});
   const [docs, setDocs] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleSelectType = (type: RegType) => {
     setRegType(type);
     setFormData({});
     setDocs([]);
+    setError(null);
+  };
+
+  const handleInputChange = (key: string, value: string) => {
+    let validatedValue = value;
+    if (key === 'tin') {
+      validatedValue = value.replace(/[^0-9]/g, '').slice(0, 12);
+      if (validatedValue.length > 0 && validatedValue.length < 9) {
+        setError('TIN must be at least 9 digits');
+      } else {
+        setError(null);
+      }
+    }
+    setFormData({ ...formData, [key]: validatedValue });
+  };
+
+  const validateForm = (fields: any[], requiredDocs: string[]) => {
+    const allFieldsFilled = fields.every(f => formData[f.key] && formData[f.key].trim().length > 0);
+    const docsUploaded = docs.length >= requiredDocs.length;
+    const tinValid = formData.tin ? formData.tin.length >= 9 : true;
+    return allFieldsFilled && docsUploaded && tinValid;
   };
 
   const handleUpload = (docName: string) => {
@@ -36,19 +58,13 @@ export default function BusinessRegistrationScreen() {
     setLoading(true);
     setTimeout(() => {
       updateBusinessData({ type: regType as any });
-      verifyKyc();
       setLoading(false);
-      router.push('/(auth)/business-localization');
-    }, 2000);
+      router.push('/(auth)/kyc-verification');
+    }, 1500);
   };
 
   const renderTypeSelection = () => (
     <Animated.View entering={FadeInDown} style={styles.selectionContainer}>
-      <Image 
-        source={require('../../assets/images/logo3.png')} 
-        style={styles.registrationLogo} 
-        resizeMode="contain"
-      />
       <Text style={[styles.title, { color: theme.text }]}>How is your business registered?</Text>
       <Text style={[styles.subtitle, { color: theme.muted }]}>Select the legal structure of your entity.</Text>
       
@@ -85,8 +101,8 @@ export default function BusinessRegistrationScreen() {
 
   const renderForm = () => {
     let title = "";
-    let fields = [];
-    let requiredDocs = [];
+    let fields: { key: string, label: string, icon: string, keyboard?: string }[] = [];
+    let requiredDocs: string[] = [];
 
     if (regType === 'SOLE_PROP') {
       title = "Sole Proprietorship Setup";
@@ -125,16 +141,28 @@ export default function BusinessRegistrationScreen() {
 
         <View style={styles.fieldsContainer}>
           {fields.map(f => (
-            <View key={f.key} style={[styles.inputGroup, { backgroundColor: theme.card }, Shadows.light]}>
-              <Ionicons name={f.icon as any} size={20} color={theme.muted} style={{ marginRight: 12 }} />
-              <TextInput
-                style={[styles.input, { color: theme.text }]}
-                placeholder={f.label}
-                placeholderTextColor={theme.muted}
-                keyboardType={(f.keyboard as any) || 'default'}
-                value={formData[f.key]}
-                onChangeText={(v) => setFormData({ ...formData, [f.key]: v })}
-              />
+            <View key={f.key}>
+              <View style={[
+                styles.inputGroup, 
+                { 
+                  backgroundColor: theme.card,
+                  borderColor: (f.key === 'tin' && error) ? theme.danger : 'transparent',
+                  borderWidth: (f.key === 'tin' && error) ? 2 : 0
+                }, 
+                Shadows.light
+              ]}>
+                <Ionicons name={f.icon as any} size={20} color={theme.muted} style={{ marginRight: 12 }} />
+                <TextInput
+                  style={[styles.input, { color: theme.text }]}
+                  placeholder={f.label}
+                  placeholderTextColor={theme.muted}
+                  keyboardType={(f.keyboard as any) || 'default'}
+                  value={formData[f.key]}
+                  onChangeText={(v) => handleInputChange(f.key, v)}
+                  maxLength={f.key === 'tin' ? 12 : 100}
+                />
+              </View>
+              {f.key === 'tin' && error && <Text style={styles.errorText}>{error}</Text>}
             </View>
           ))}
         </View>
@@ -170,9 +198,13 @@ export default function BusinessRegistrationScreen() {
           title="Submit for Verification" 
           onPress={handleSubmit}
           loading={loading}
-          disabled={docs.length < requiredDocs.length}
+          disabled={!validateForm(fields, requiredDocs)}
           variant="business"
-          style={{ marginTop: 40, marginBottom: 24 }}
+          style={{ 
+            marginTop: 40, 
+            marginBottom: 24,
+            backgroundColor: validateForm(fields, requiredDocs) ? theme.business : theme.border
+          }}
         />
 
         <View style={styles.privacyFooter}>
@@ -201,7 +233,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 26, fontWeight: '800', marginBottom: 8 },
   subtitle: { fontSize: 15, lineHeight: 22, marginBottom: 32 },
   selectionContainer: { flex: 1 },
-  registrationLogo: { width: 150, height: 50, marginBottom: 32 },
   cardGrid: { gap: 16 },
   typeCard: { padding: 24, borderRadius: 20, alignItems: 'center', borderWidth: 1, borderColor: 'transparent' },
   cardTitle: { fontSize: 18, fontWeight: '700', marginTop: 12 },
@@ -211,6 +242,7 @@ const styles = StyleSheet.create({
   fieldsContainer: { gap: 16, marginBottom: 32 },
   inputGroup: { flexDirection: 'row', alignItems: 'center', padding: 16, borderRadius: 16 },
   input: { flex: 1, fontSize: 16, fontWeight: '600' },
+  errorText: { color: '#FF3B30', fontSize: 10, fontWeight: '700', marginTop: 8, marginLeft: 16 },
   sectionTitle: { fontSize: 12, fontWeight: '800', letterSpacing: 1.5, marginBottom: 16, marginTop: 8 },
   docsContainer: { gap: 12 },
   docBtn: { flexDirection: 'row', alignItems: 'center', padding: 18, borderRadius: 16, borderWidth: 1.5, gap: 12 },

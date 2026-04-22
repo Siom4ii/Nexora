@@ -87,7 +87,7 @@ export default function BusinessDashboard() {
         </View>
       </Animated.View>
 
-      <View style={[styles.cyberTabs, { backgroundColor: isDark ? 'rgba(255,255,255,0.03)' : theme.card }]}>
+      <View style={[styles.cyberTabs, { backgroundColor: isDark ? theme.white + '08' : theme.card }]}>
         {['DISCOVERY', 'PENDING', 'HISTORY'].map((tab) => (
           <TouchableOpacity 
             key={tab} 
@@ -119,16 +119,16 @@ export default function BusinessDashboard() {
 
         {activeTab === 'PENDING' && (
           <Animated.View entering={FadeInRight} style={styles.pendingContainer}>
-            <Text style={[styles.subSectionTitle, { color: theme.muted }]}>// ACTIVE REQUESTS</Text>
+            <Text style={[styles.subSectionTitle, { color: theme.muted }]}>ACTIVE REQUESTS</Text>
             {postedJobs.filter(j => j.status === 'PENDING').map((job, idx) => (
               <ElevatedCard key={job.id} style={styles.cyberJobInfo} delay={idx * 100}>
                 <Ionicons name="pulse" size={20} color={theme.business} />
                 <Text style={[styles.jobTitle, { color: theme.text }]}>{job.title} • ₱{job.rate}</Text>
-                <Text style={[styles.blinkText, { color: '#FF9500' }]}>[WAITING]</Text>
+                <Text style={[styles.blinkText, { color: theme.warning }]}>[WAITING]</Text>
               </ElevatedCard>
             ))}
             
-            <Text style={[styles.subSectionTitle, { color: theme.muted, marginTop: 32 }]}>// APPLICANT QUEUE</Text>
+            <Text style={[styles.subSectionTitle, { color: theme.muted, marginTop: 32 }]}>APPLICANT QUEUE</Text>
             {applicants.map((app, idx) => (
               <ElevatedCard key={app.id} style={styles.applicantCard} delay={idx * 150}>
                 <View style={styles.workerInfo}>
@@ -137,7 +137,7 @@ export default function BusinessDashboard() {
                     <Text style={[styles.workerSub, { color: theme.muted }]}>{app.role.toUpperCase()} • {app.distance.toUpperCase()} • ⭐ {app.rating}</Text>
                   </View>
                   <View style={styles.actionRow}>
-                    <TouchableOpacity style={styles.declineBtn}><Ionicons name="close" size={20} color="#FF3B30" /></TouchableOpacity>
+                    <TouchableOpacity style={[styles.declineBtn, { borderColor: theme.danger }]}><Ionicons name="close" size={20} color={theme.danger} /></TouchableOpacity>
                     <TouchableOpacity 
                       style={[styles.hireBtn, { backgroundColor: theme.business }]}
                       onPress={() => handleHire(app)}
@@ -153,26 +153,26 @@ export default function BusinessDashboard() {
 
         {activeTab === 'HISTORY' && (
           <Animated.View entering={FadeInRight} style={styles.historyContainer}>
-            <Text style={[styles.subSectionTitle, { color: theme.muted }]}>// DEPLOYED UNITS</Text>
+            <Text style={[styles.subSectionTitle, { color: theme.muted }]}>DEPLOYED UNITS</Text>
             {postedJobs.filter(j => j.status === 'ACTIVE').map((job, idx) => (
               <ElevatedCard key={job.id} style={styles.activeUnitCard} delay={idx * 100}>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.workerName, { color: theme.text }]}>{job.workerName.toUpperCase()}</Text>
+                  <Text style={[styles.workerName, { color: theme.text }]}>{job.workerName?.toUpperCase()}</Text>
                   <Text style={{ color: theme.muted, fontSize: 11 }}>SECTOR: {job.title.toUpperCase()}</Text>
                 </View>
                 <View style={[styles.glitchBadge, { backgroundColor: theme.business }]}>
-                  <Text style={styles.glitchText}>LIVE DATA</Text>
+                  <Text style={[styles.glitchText, { color: theme.card }]}>LIVE DATA</Text>
                 </View>
               </ElevatedCard>
             ))}
-            <Text style={[styles.subSectionTitle, { color: theme.muted, marginTop: 32 }]}>// PAST TALENT</Text>
+            <Text style={[styles.subSectionTitle, { color: theme.muted, marginTop: 32 }]}>PAST TALENT</Text>
             <Text style={{ color: theme.muted, textAlign: 'center', marginTop: 20, fontSize: 12 }}>NO PREVIOUS DATA FOUND</Text>
           </Animated.View>
         )}
       </View>
 
       <TouchableOpacity 
-        style={[styles.fabCyber, { borderColor: theme.business }, isDark && Shadows.glow.business]}
+        style={[styles.fabCyber, { borderColor: theme.business, backgroundColor: theme.background + 'E6' }, isDark && Shadows.glow.business]}
         onPress={() => {
           Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
           setModalVisible(true);
@@ -182,8 +182,8 @@ export default function BusinessDashboard() {
       </TouchableOpacity>
 
       <Modal visible={isModalVisible} animationType="fade" transparent>
-        <View style={styles.modalOverlay}>
-          <Animated.View entering={SlideInDown} style={[styles.cyberModal, { backgroundColor: isDark ? '#0F172A' : theme.card, borderColor: theme.business }]}>
+        <View style={[styles.modalOverlay, { backgroundColor: theme.text + 'CC' }]}>
+          <Animated.View entering={SlideInDown} style={[styles.cyberModal, { backgroundColor: isDark ? theme.background : theme.card, borderColor: theme.business }]}>
             <View style={styles.modalHeaderCyber}>
               <Text style={[styles.modalTitleCyber, { color: theme.text }]}>INITIALIZE NEW SHIFT</Text>
               <TouchableOpacity onPress={() => setModalVisible(false)} style={styles.closeModalBtn}>
@@ -256,7 +256,7 @@ const styles = StyleSheet.create({
   workerName: { fontSize: 15, fontWeight: '900', letterSpacing: 1 },
   workerSub: { fontSize: 10, fontWeight: '700', marginTop: 4 },
   neonBtn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 4, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
-  neonBtnText: { fontSize: 10, fontWeight: '900', color: '#fff' },
+  neonBtnText: { fontSize: 10, fontWeight: '900', color: '#FFFFFF' },
   pendingContainer: { padding: 20 },
   subSectionTitle: { fontSize: 11, fontWeight: '900', marginBottom: 20, letterSpacing: 2 },
   cyberJobInfo: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },

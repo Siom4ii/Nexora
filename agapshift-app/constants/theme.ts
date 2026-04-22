@@ -18,6 +18,11 @@ export const Colors = {
     card: '#FFFFFF',
     border: '#E9ECEF',
     muted: '#6C757D',
+    success: '#34C759',
+    danger: '#FF3B30',
+    warning: '#FF9500',
+    info: '#5856D6',
+    white: '#FFFFFF',
   },
   dark: {
     text: '#FFFFFF',
@@ -32,6 +37,11 @@ export const Colors = {
     border: 'rgba(255, 255, 255, 0.1)',
     muted: '#94A3B8',
     glass: glass,
+    success: '#32D74B',
+    danger: '#FF453A',
+    warning: '#FF9F0A',
+    info: '#5E5CE6',
+    white: '#FFFFFF',
   },
 };
 
@@ -51,6 +61,22 @@ export const Shadows = {
       shadowRadius: 15,
       elevation: 10,
     }
+  },
+  light: {
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+      web: {
+        boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.1)',
+      },
+    }),
   },
   medium: {
     ...Platform.select({
