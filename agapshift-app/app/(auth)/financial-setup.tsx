@@ -1,50 +1,70 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView } from 'react-native';
+import React, { useState, useEffect, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Switch } from 'react-native';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { Colors, Shadows } from '../../constants/theme';
 import { ModernButton } from '../../components/ui/ModernButton';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInUp, FadeInRight } from 'react-native-reanimated';
+import Animated, { FadeInUp, FadeInDown, Layout } from 'react-native-reanimated';
+
+const BANKS = ['BDO', 'BPI', 'LANDBANK'];
+const EWALLETS = ['GCash', 'Maya'];
 
 export default function FinancialSetupScreen() {
   const router = useRouter();
   const { role, login } = useAuth();
   const colorScheme = useColorScheme() ?? 'light';
   const theme = Colors[colorScheme];
-  const isDark = colorScheme === 'dark';
   
   const [method, setMethod] = useState<'BANK' | 'EWALLET' | null>(null);
+  const [provider, setProvider] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [holderName, setHolderName] = useState('');
   const [accountNumber, setAccountNumber] = useState('');
-  const [error, setError] = useState<string | null>(null);
+  const [isPrimary, setIsPrimary] = useState(true);
+  const [errors, setErrors] = useState<{ [key: string]: string | null }>({});
 
   const accentColor = role === 'WORKER' ? theme.worker : theme.business;
 
-  const validate = () => {
-    if (!holderName.trim()) return false;
-    if (method === 'EWALLET') {
-      return accountNumber.length === 10 && accountNumber.startsWith('9');
+  const validate = useCallback(() => {
+    const newErrors: { [key: string]: string | null } = {};
+    
+    if (!method) return false;
+    if (!provider) return false;
+    
+    if (!holderName.trim()) {
+      newErrors.holderName = 'Account name is required';
+    } else if (holderName.trim().length < 3) {
+      newErrors.holderName = 'Enter a valid full name';
     }
-    return accountNumber.length >= 10;
-  };
+
+    if (method === 'EWALLET') {
+      if (!accountNumber.startsWith('09') || accountNumber.length !== 11) {
+        newErrors.accountNumber = 'Enter 11-digit PH mobile number (09XXXXXXXXX)';
+      }
+    } else {
+      if (accountNumber.length < 10 || accountNumber.length > 16) {
+        newErrors.accountNumber = 'Bank account number should be 10-16 digits';
+      }
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  }, [method, provider, holderName, accountNumber]);
+
+  useEffect(() => {
+    if (method || provider || holderName || accountNumber) {
+      validate();
+    }
+  }, [method, provider, holderName, accountNumber, validate]);
 
   const handleNumberChange = (val: string) => {
     const numeric = val.replace(/[^0-9]/g, '');
     if (method === 'EWALLET') {
-      setAccountNumber(numeric.slice(0, 10));
-      if (numeric.length > 0 && !numeric.startsWith('9')) {
-        setError('Mobile number must start with 9');
-      } else if (numeric.length > 0 && numeric.length < 10) {
-        setError('Enter 10-digit PH number');
-      } else {
-        setError(null);
-      }
+      setAccountNumber(numeric.slice(0, 11));
     } else {
-      setAccountNumber(numeric);
-      setError(null);
+      setAccountNumber(numeric.slice(0, 16));
     }
   };
 
@@ -61,8 +81,11 @@ export default function FinancialSetupScreen() {
     }, 1500);
   };
 
+  const isFormValid = method && provider && holderName.trim().length >= 3 && 
+    (method === 'EWALLET' ? (accountNumber.startsWith('09') && accountNumber.length === 11) : (accountNumber.length >= 10));
+
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
+    <ScrollView style={[styles.container, { backgroundColor: theme.background }]} showsVerticalScrollIndicator={false}>
       <View style={styles.content}>
         <Animated.View entering={FadeInUp.duration(800)}>
           <Text style={[styles.title, { color: theme.text }]}>
@@ -77,64 +100,120 @@ export default function FinancialSetupScreen() {
 
         <View style={styles.choiceContainer}>
           <TouchableOpacity 
+            activeOpacity={0.7}
             style={[
               styles.choiceCard, 
-              { backgroundColor: theme.card, borderColor: method === 'BANK' ? accentColor : theme.border }, 
-              Shadows.light
+              { 
+                backgroundColor: theme.card, 
+                borderColor: method === 'BANK' ? accentColor : theme.border,
+                borderWidth: method === 'BANK' ? 2 : 1
+              }, 
+              method === 'BANK' ? (role === 'WORKER' ? Shadows.glow.worker : Shadows.glow.business) : Shadows.light
             ]}
-            onPress={() => setMethod('BANK')}
+            onPress={() => {
+              setMethod('BANK');
+              setProvider(null);
+            }}
           >
-            <Ionicons name="business-outline" size={28} color={method === 'BANK' ? accentColor : theme.muted} />
-            <Text style={[styles.choiceText, { color: theme.text }]}>LINK BANK ACCOUNT</Text>
-            <View style={[styles.radio, { borderColor: theme.border }]}>
+            <View style={[styles.iconCircle, { backgroundColor: method === 'BANK' ? accentColor + '20' : theme.background }]}>
+              <Ionicons name="business" size={24} color={method === 'BANK' ? accentColor : theme.muted} />
+            </View>
+            <Text style={[styles.choiceText, { color: theme.text, fontWeight: method === 'BANK' ? '900' : '700' }]}>LINK BANK ACCOUNT</Text>
+            <View style={[styles.radio, { borderColor: method === 'BANK' ? accentColor : theme.border }]}>
               {method === 'BANK' && <View style={[styles.radioFill, { backgroundColor: accentColor }]} />}
             </View>
           </TouchableOpacity>
 
           <TouchableOpacity 
+            activeOpacity={0.7}
             style={[
               styles.choiceCard, 
-              { backgroundColor: theme.card, borderColor: method === 'EWALLET' ? accentColor : theme.border }, 
-              Shadows.light
+              { 
+                backgroundColor: theme.card, 
+                borderColor: method === 'EWALLET' ? accentColor : theme.border,
+                borderWidth: method === 'EWALLET' ? 2 : 1
+              }, 
+              method === 'EWALLET' ? (role === 'WORKER' ? Shadows.glow.worker : Shadows.glow.business) : Shadows.light
             ]}
-            onPress={() => setMethod('EWALLET')}
+            onPress={() => {
+              setMethod('EWALLET');
+              setProvider(null);
+            }}
           >
-            <Ionicons name="wallet-outline" size={28} color={method === 'EWALLET' ? accentColor : theme.muted} />
-            <Text style={[styles.choiceText, { color: theme.text }]}>LINK E-WALLET (GCASH/MAYA)</Text>
-            <View style={[styles.radio, { borderColor: theme.border }]}>
+            <View style={[styles.iconCircle, { backgroundColor: method === 'EWALLET' ? accentColor + '20' : theme.background }]}>
+              <Ionicons name="wallet" size={24} color={method === 'EWALLET' ? accentColor : theme.muted} />
+            </View>
+            <Text style={[styles.choiceText, { color: theme.text, fontWeight: method === 'EWALLET' ? '900' : '700' }]}>LINK E-WALLET</Text>
+            <View style={[styles.radio, { borderColor: method === 'EWALLET' ? accentColor : theme.border }]}>
               {method === 'EWALLET' && <View style={[styles.radioFill, { backgroundColor: accentColor }]} />}
             </View>
           </TouchableOpacity>
         </View>
 
         {method && (
-          <Animated.View entering={FadeInRight} style={styles.form}>
-            <Text style={[styles.sectionLabel, { color: accentColor }]}>ACCOUNT CREDENTIALS</Text>
-            <TextInput 
-              style={[styles.cyberInput, { color: theme.text, borderColor: theme.border }]}
-              placeholder="HOLDER NAME (E.G. JUAN DELA CRUZ)"
-              placeholderTextColor={theme.muted}
-              value={holderName}
-              onChangeText={setHolderName}
-            />
-            <View>
-              <TextInput 
-                style={[
-                  styles.cyberInput, 
-                  { 
-                    color: theme.text, 
-                    borderColor: error ? theme.danger : theme.border,
-                    borderBottomWidth: error ? 2 : 1
-                  }
-                ]}
-                placeholder={method === 'BANK' ? "ACCOUNT_NUMBER" : "MOBILE_NUMBER (E.G. 917 123 4567)"}
-                placeholderTextColor={theme.muted}
-                keyboardType="number-pad"
-                value={accountNumber}
-                onChangeText={handleNumberChange}
-                maxLength={method === 'EWALLET' ? 10 : 20}
+          <Animated.View entering={FadeInDown} layout={Layout.springify()} style={styles.form}>
+            <View style={styles.providerSection}>
+              <Text style={[styles.sectionLabel, { color: accentColor }]}>SELECT {method === 'BANK' ? 'BANK' : 'E-WALLET'}</Text>
+              <View style={styles.providerList}>
+                {(method === 'BANK' ? BANKS : EWALLETS).map((p) => (
+                  <TouchableOpacity
+                    key={p}
+                    style={[
+                      styles.providerChip,
+                      { 
+                        borderColor: provider === p ? accentColor : theme.border,
+                        backgroundColor: provider === p ? accentColor + '10' : 'transparent'
+                      }
+                    ]}
+                    onPress={() => setProvider(p)}
+                  >
+                    <Text style={[styles.providerText, { color: provider === p ? accentColor : theme.muted }]}>{p}</Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={styles.inputGroup}>
+              <Text style={[styles.sectionLabel, { color: accentColor }]}>ACCOUNT DETAILS</Text>
+              
+              <View style={styles.inputWrapper}>
+                <Ionicons name="person-outline" size={18} color={theme.muted} style={styles.inputIcon} />
+                <TextInput 
+                  style={[styles.cyberInput, { color: theme.text, borderColor: errors.holderName ? theme.danger : theme.border }]}
+                  placeholder="Account Name (e.g. Juan Dela Cruz)"
+                  placeholderTextColor={theme.muted}
+                  value={holderName}
+                  onChangeText={setHolderName}
+                />
+              </View>
+              {errors.holderName && <Text style={styles.errorMessage}>{errors.holderName}</Text>}
+
+              <View style={styles.inputWrapper}>
+                <Ionicons name={method === 'BANK' ? "card-outline" : "phone-portrait-outline"} size={18} color={theme.muted} style={styles.inputIcon} />
+                <TextInput 
+                  style={[styles.cyberInput, { color: theme.text, borderColor: errors.accountNumber ? theme.danger : theme.border }]}
+                  placeholder={method === 'BANK' ? "Account Number (10–16 digits)" : "Mobile Number (e.g. 0917XXXXXXX)"}
+                  placeholderTextColor={theme.muted}
+                  keyboardType="number-pad"
+                  value={accountNumber}
+                  onChangeText={handleNumberChange}
+                  maxLength={method === 'EWALLET' ? 11 : 16}
+                />
+              </View>
+              {errors.accountNumber && <Text style={styles.errorMessage}>{errors.accountNumber}</Text>}
+            </View>
+
+            <View style={styles.toggleRow}>
+              <View>
+                <Text style={[styles.toggleLabel, { color: theme.text }]}>Set as Primary Payout Method</Text>
+                <Text style={[styles.toggleSub, { color: theme.muted }]}>Use this for all future earnings automatically</Text>
+              </View>
+              <Switch
+                value={isPrimary}
+                onValueChange={setIsPrimary}
+                trackColor={{ false: theme.border, true: accentColor + '80' }}
+                thumbColor={isPrimary ? accentColor : '#f4f3f4'}
               />
-              {error && <Text style={styles.errorMessage}>{error}</Text>}
             </View>
             
             {role === 'BUSINESS' && (
@@ -153,16 +232,23 @@ export default function FinancialSetupScreen() {
               </View>
             )}
 
+            <View style={styles.securityNote}>
+              <Ionicons name="lock-closed" size={14} color={theme.success} />
+              <Text style={[styles.securityText, { color: theme.muted }]}>
+                Your payout details are securely encrypted and protected.
+              </Text>
+            </View>
+
             <ModernButton 
               title={role === 'WORKER' ? "CONFIRM PAYOUT METHOD" : "AUTHORIZE & SECURE"} 
               onPress={handleAuthorize}
               loading={loading}
-              disabled={!validate()}
+              disabled={!isFormValid}
               variant={role === 'WORKER' ? 'worker' : 'business'}
               style={{ 
-                marginTop: 32, 
+                marginTop: 16, 
                 marginBottom: 40,
-                backgroundColor: validate() ? accentColor : theme.border
+                opacity: isFormValid ? 1 : 0.6
               }}
             />
           </Animated.View>
@@ -177,19 +263,52 @@ const styles = StyleSheet.create({
   content: { padding: 24, paddingTop: 60 },
   title: { fontSize: 24, fontWeight: '900', letterSpacing: 2, marginBottom: 8 },
   subtitle: { fontSize: 11, fontWeight: '700', letterSpacing: 1, marginBottom: 40 },
-  choiceContainer: { gap: 16, marginBottom: 40 },
-  choiceCard: { flexDirection: 'row', alignItems: 'center', padding: 20, borderRadius: 16, borderWidth: 1 },
-  choiceText: { flex: 1, fontSize: 13, fontWeight: '900', marginLeft: 16, letterSpacing: 0.5 },
-  radio: { width: 24, height: 24, borderRadius: 12, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
+  choiceContainer: { gap: 16, marginBottom: 32 },
+  choiceCard: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    padding: 16, 
+    borderRadius: 20, 
+    borderWidth: 1 
+  },
+  iconCircle: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  choiceText: { flex: 1, fontSize: 13, marginLeft: 16, letterSpacing: 0.5 },
+  radio: { width: 22, height: 22, borderRadius: 11, borderWidth: 2, justifyContent: 'center', alignItems: 'center' },
   radioFill: { width: 12, height: 12, borderRadius: 6 },
-  form: { gap: 16 },
-  sectionLabel: { fontSize: 11, fontWeight: '900', letterSpacing: 2, marginBottom: 4 },
-  cyberInput: { padding: 18, borderBottomWidth: 1, fontSize: 15, fontWeight: '700', letterSpacing: 0.5 },
-  errorMessage: { color: '#FF3B30', fontSize: 10, fontWeight: '700', marginTop: 8, marginLeft: 18 },
-  escrowConfig: { padding: 20, borderRadius: 16, backgroundColor: '#FFFFFF08', marginTop: 10 },
+  form: { gap: 24 },
+  sectionLabel: { fontSize: 11, fontWeight: '900', letterSpacing: 2, marginBottom: 12 },
+  providerSection: {},
+  providerList: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
+  providerChip: { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 12, borderWidth: 1.5 },
+  providerText: { fontSize: 13, fontWeight: '800' },
+  inputGroup: { gap: 16 },
+  inputWrapper: { position: 'relative' },
+  inputIcon: { position: 'absolute', left: 16, top: 18, zIndex: 1 },
+  cyberInput: { 
+    padding: 16, 
+    paddingLeft: 44,
+    borderWidth: 1, 
+    borderRadius: 14,
+    fontSize: 15, 
+    fontWeight: '600',
+  },
+  errorMessage: { color: '#FF3B30', fontSize: 11, fontWeight: '600', marginTop: -8, marginLeft: 4 },
+  toggleRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 },
+  toggleLabel: { fontSize: 14, fontWeight: '700' },
+  toggleSub: { fontSize: 11, marginTop: 2 },
+  securityNote: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 8 },
+  securityText: { fontSize: 11, fontWeight: '500' },
+  escrowConfig: { padding: 20, borderRadius: 16, backgroundColor: 'rgba(255, 255, 255, 0.05)', marginTop: 0 },
   escrowHeader: { flexDirection: 'row', alignItems: 'center', gap: 8, marginBottom: 16 },
   escrowTitle: { fontSize: 12, fontWeight: '900', letterSpacing: 1 },
   bufferOptions: { flexDirection: 'row', gap: 10 },
   bufferChip: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 6, borderWidth: 1 },
   bufferText: { fontSize: 10, fontWeight: '900' },
 });
+

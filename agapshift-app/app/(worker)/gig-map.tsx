@@ -1,21 +1,21 @@
-import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Platform } from 'react-native';
+import React, { useEffect, useState, useCallback } from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Platform, RefreshControl, ScrollView } from 'react-native';
 import { useColorScheme } from '@/hooks/use-color-scheme';
-import { LocationService } from '../../services/locationService';
 import { Colors, Shadows } from '../../constants/theme';
 import { ElevatedCard } from '../../components/ui/ElevatedCard';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import Animated, { 
   FadeInDown, 
-  FadeInRight, 
   useAnimatedStyle, 
   useSharedValue, 
   withSpring, 
   withRepeat, 
   withSequence, 
   withTiming,
-  interpolateColor 
+  interpolateColor,
+  Layout,
+  SlideInUp
 } from 'react-native-reanimated';
 import { useAuth } from '../../context/AuthContext';
 import * as Haptics from 'expo-haptics';
@@ -43,7 +43,9 @@ function MainHeader() {
   }, [workerData.isOnline]);
 
   const toggleOnline = () => {
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    if (Platform.OS !== 'web') {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy);
+    }
     updateWorkerData({ isOnline: !workerData.isOnline });
   };
 
@@ -99,7 +101,11 @@ function MainHeader() {
             style={styles.logo}
             contentFit="contain"
           />
-          <Text style={[styles.hudLabel, { color: theme.muted }]}>SHIFT AVAILABILITY: {workerData.isOnline ? 'ACTIVE' : 'IDLE'}</Text>
+          <Text style={[styles.hudLabel, { color: theme.muted }]}>
+            {workerData.isOnline 
+              ? 'VISIBLE TO EMPLOYERS • ACTIVE' 
+              : 'HIDDEN FROM STREAM • IDLE'}
+          </Text>
         </View>
 
         <TouchableOpacity 
@@ -116,7 +122,7 @@ function MainHeader() {
             
             <Animated.View style={[
               styles.selector, 
-              workerData.isOnline && Shadows.glow.worker,
+              workerData.isOnline && (Platform.OS === 'web' ? { boxShadow: `0 0 15px ${theme.worker}` } : Shadows.glow.worker),
               animatedSelectorStyle
             ]} />
 
@@ -141,10 +147,60 @@ export default function GigMapScreen() {
   const theme = Colors[colorScheme];
   const isDark = colorScheme === 'dark';
 
+  const [refreshing, setRefreshing] = useState(false);
+  const [activeFilter, setActiveFilter] = useState('Nearest');
+  const [showNewJobsBanner, setShowNewJobsBanner] = useState(false);
+  const radarPulse = useSharedValue(1);
+
+  useEffect(() => {
+    radarPulse.value = withRepeat(
+      withSequence(
+        withTiming(1.2, { duration: 1500 }),
+        withTiming(1, { duration: 1500 })
+      ),
+      -1,
+      true
+    );
+
+    // Simulate new job alert
+    const timer = setTimeout(() => setShowNewJobsBanner(true), 5000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  const animatedRadarStyle = useAnimatedStyle(() => ({
+    transform: [{ scale: radarPulse.value }],
+    opacity: 1.5 - radarPulse.value,
+  }));
+
   const handleApply = (jobTitle: string) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Alert.alert('APPLICATION TRANSMITTED', `Your profile has been sent to ${jobTitle}. Status: PENDING REVIEW`);
   };
+
+  const onRefresh = useCallback(() => {
+    setRefreshing(true);
+    setTimeout(() => {
+      setRefreshing(false);
+      setShowNewJobsBanner(false);
+    }, 2000);
+  }, []);
+
+  const pendingJobs = postedJobs.filter(j => j.status === 'PENDING');
+
+  const renderEmptyState = () => (
+    <Animated.View entering={FadeInDown} style={styles.emptyState}>
+      <View style={[styles.emptyIconBox, { backgroundColor: theme.worker + '10' }]}>
+        <Ionicons name="map-outline" size={64} color={theme.worker} />
+      </View>
+      <Text style={[styles.emptyTitle, { color: theme.text }]}>NO SHIFTS NEARBY</Text>
+      <Text style={[styles.emptyDesc, { color: theme.muted }]}>
+        Try expanding your discovery range or check back in a few minutes.
+      </Text>
+      <TouchableOpacity style={[styles.refreshBtn, { backgroundColor: theme.worker }]} onPress={onRefresh}>
+        <Text style={styles.refreshBtnText}>EXPAND RANGE</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
 
   return (
     <View style={[styles.container, { backgroundColor: theme.background }]}>
@@ -153,51 +209,116 @@ export default function GigMapScreen() {
       {/* High-Tech Discovery Header */}
       <View style={[styles.mapHeader, { backgroundColor: isDark ? 'transparent' : theme.worker + '10' }]}>
         <View style={styles.radarLayer}>
-          <View style={[styles.radarCircle, { borderColor: theme.worker + '20' }]} />
-          <View style={[styles.radarCircleSmall, { borderColor: theme.worker + '40' }]} />
+          <Animated.View style={[styles.radarCircle, { borderColor: theme.worker + '40' }, animatedRadarStyle]} />
+          <View style={[styles.radarCircleSmall, { borderColor: theme.worker + '20' }]} />
         </View>
-        <Ionicons name="navigate-circle-outline" size={48} color={theme.worker} />
+        <Ionicons name="navigate-circle" size={56} color={theme.worker} />
         <Text style={[styles.commandTitle, { color: theme.text }]}>DISCOVERY STREAM</Text>
         <View style={[styles.statusStrip, { backgroundColor: theme.worker + '15' }]}>
-          <View style={[styles.activeDot, { backgroundColor: theme.worker }]} />
-          <Text style={[styles.statusText, { color: theme.worker }]}>GPS ACTIVE: SCANNING NEARBY SECTORS</Text>
+          <View style={[styles.activeDot, { backgroundColor: theme.success }]} />
+          <Text style={[styles.statusText, { color: theme.worker }]}>
+            {pendingJobs.length} JOBS FOUND NEAR YOU
+          </Text>
         </View>
+        <TouchableOpacity style={styles.accuracyTag}>
+          <Ionicons name="locate" size={12} color={theme.muted} />
+          <Text style={[styles.accuracyText, { color: theme.muted }]}>ACCURACY: HIGH (5M)</Text>
+        </TouchableOpacity>
       </View>
+
+      {showNewJobsBanner && (
+        <Animated.View entering={SlideInUp} style={[styles.newJobsBanner, { backgroundColor: theme.worker }]}>
+          <Ionicons name="sparkles" size={16} color="#fff" />
+          <Text style={styles.newJobsText}>New jobs available in your sector!</Text>
+          <TouchableOpacity onPress={() => onRefresh()}>
+            <Text style={styles.newJobsAction}>REFRESH</Text>
+          </TouchableOpacity>
+        </Animated.View>
+      )}
 
       <View style={styles.content}>
         <View style={styles.sectionHeader}>
-          <Text style={[styles.sectionTitle, { color: theme.text }]}>AVAILABLE SHIFTS</Text>
-          <View style={styles.filterBtn}>
-            <Ionicons name="options-outline" size={16} color={theme.worker} />
+          <FlatList
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.filterScroll}
+            data={['Nearest', 'Highest Pay', 'Retail', 'Logistics']}
+            keyExtractor={(item) => item}
+            renderItem={({ item: filter }) => (
+              <TouchableOpacity 
+                onPress={() => setActiveFilter(filter)}
+                style={[
+                  styles.filterChip, 
+                  { 
+                    backgroundColor: activeFilter === filter ? theme.worker : 'transparent',
+                    borderColor: activeFilter === filter ? theme.worker : theme.border 
+                  }
+                ]}
+              >
+                <Text style={[
+                  styles.filterChipText, 
+                  { color: activeFilter === filter ? '#fff' : theme.muted }
+                ]}>{filter}</Text>
+              </TouchableOpacity>
+            )}
+          />
+          <View style={[styles.filterBtn, { borderColor: theme.border }]}>
+            <Ionicons name="options-outline" size={18} color={theme.text} />
           </View>
         </View>
 
         <FlatList
-          data={postedJobs.filter(j => j.status === 'PENDING')}
+          data={pendingJobs}
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listPadding}
+          showsVerticalScrollIndicator={false}
+          ListEmptyComponent={renderEmptyState}
+          refreshControl={
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={theme.worker} />
+          }
           renderItem={({ item, index }) => (
-            <ElevatedCard style={styles.jobCard} delay={index * 100} noShadow>
+            <ElevatedCard style={styles.jobCard} delay={index * 100} layout={Layout.springify()}>
+              <View style={styles.jobTopRow}>
+                <View style={[styles.distBadge, { backgroundColor: theme.worker + '15' }]}>
+                  <Ionicons name="location" size={10} color={theme.worker} />
+                  <Text style={[styles.distText, { color: theme.worker }]}>1.2 KM AWAY</Text>
+                </View>
+                <View style={styles.ratingRow}>
+                  <Ionicons name="star" size={12} color="#FFD700" />
+                  <Text style={[styles.ratingText, { color: theme.text }]}>4.8</Text>
+                </View>
+              </View>
+
               <View style={styles.jobInfo}>
-                <View style={[styles.jobIconBox, { borderColor: theme.worker }]}>
+                <View style={[styles.jobIconBox, { backgroundColor: theme.worker + '10', borderColor: theme.worker + '30' }]}>
                   <Ionicons name="briefcase" size={24} color={theme.worker} />
                 </View>
                 <View style={{ flex: 1 }}>
-                  <Text style={[styles.jobTitle, { color: theme.text }]}>{item.title.toUpperCase()}</Text>
-                  <Text style={[styles.jobMeta, { color: theme.muted }]}>ORG: {item.businessName?.toUpperCase()} • DIST: 1.2KM</Text>
+                  <Text style={[styles.jobTitle, { color: theme.text }]}>{item.title}</Text>
+                  <Text style={[styles.jobMeta, { color: theme.muted }]}>{item.businessName}</Text>
+                  <View style={styles.tagRow}>
+                    <View style={[styles.tag, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F0F0F0' }]}>
+                      <Ionicons name="time-outline" size={12} color={theme.muted} />
+                      <Text style={[styles.tagText, { color: theme.muted }]}>4 HRS</Text>
+                    </View>
+                    <View style={[styles.tag, { backgroundColor: isDark ? 'rgba(255,255,255,0.05)' : '#F0F0F0' }]}>
+                      <Ionicons name="flash-outline" size={12} color={theme.muted} />
+                      <Text style={[styles.tagText, { color: theme.muted }]}>URGENT</Text>
+                    </View>
+                  </View>
                 </View>
                 <View style={styles.rateContainer}>
-                  <Text style={[styles.rateText, { color: theme.business }]}>₱{item.rate}</Text>
-                  <Text style={[styles.rateSub, { color: theme.muted }]}>/SHIFT</Text>
+                  <Text style={[styles.rateText, { color: theme.success }]}>₱{item.rate}</Text>
+                  <Text style={[styles.rateSub, { color: theme.muted }]}>TOTAL PAY</Text>
                 </View>
               </View>
               
               <TouchableOpacity 
-                style={[styles.applyBtn, { borderColor: theme.worker }]}
+                style={[styles.applyBtn, { backgroundColor: theme.worker }]}
                 onPress={() => handleApply(item.title)}
               >
-                <Text style={[styles.applyBtnText, { color: theme.worker }]}>INITIALIZE APPLICATION</Text>
-                <Ionicons name="chevron-forward" size={14} color={theme.worker} />
+                <Text style={styles.applyBtnText}>ACCEPT SHIFT</Text>
+                <Ionicons name="arrow-forward" size={16} color="#fff" />
               </TouchableOpacity>
             </ElevatedCard>
           )}
@@ -209,7 +330,6 @@ export default function GigMapScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
-  // Header Styles (Moved from Layout)
   mainHeader: { 
     paddingTop: 45, 
     paddingBottom: 16, 
@@ -218,7 +338,7 @@ const styles = StyleSheet.create({
   },
   headerContent: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
   logo: { width: 140, height: 40 },
-  hudLabel: { fontSize: 8, fontWeight: '900', marginTop: 2, letterSpacing: 1 },
+  hudLabel: { fontSize: 8, fontWeight: '900', marginTop: 2, letterSpacing: 0.5 },
   switchTouchArea: { padding: 4 },
   switchContainer: {
     width: 136,
@@ -259,28 +379,76 @@ const styles = StyleSheet.create({
     letterSpacing: 1,
   },
 
-  // Gig Map specific styles
-  mapHeader: { height: 220, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
+  mapHeader: { height: 260, justifyContent: 'center', alignItems: 'center', overflow: 'hidden' },
   radarLayer: { position: 'absolute', width: '100%', height: '100%', justifyContent: 'center', alignItems: 'center' },
-  radarCircle: { width: 220, height: 220, borderRadius: 110, borderWidth: 1 },
+  radarCircle: { width: 220, height: 220, borderRadius: 110, borderWidth: 2 },
   radarCircleSmall: { width: 140, height: 140, borderRadius: 70, borderWidth: 1 },
-  commandTitle: { fontSize: 22, fontWeight: '900', marginTop: 16, letterSpacing: 4 },
-  statusStrip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 12, paddingVertical: 4, borderRadius: 4, marginTop: 12 },
-  activeDot: { width: 6, height: 6, borderRadius: 3 },
-  statusText: { fontSize: 9, fontWeight: '800', letterSpacing: 1 },
+  commandTitle: { fontSize: 24, fontWeight: '900', marginTop: 16, letterSpacing: 4 },
+  statusStrip: { flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 16, paddingVertical: 6, borderRadius: 20, marginTop: 12 },
+  activeDot: { width: 8, height: 8, borderRadius: 4 },
+  statusText: { fontSize: 10, fontWeight: '900', letterSpacing: 1 },
+  accuracyTag: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8 },
+  accuracyText: { fontSize: 8, fontWeight: '700', letterSpacing: 1 },
+  
+  newJobsBanner: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    paddingVertical: 10, 
+    paddingHorizontal: 20, 
+    gap: 10,
+    position: 'absolute',
+    top: 310,
+    left: 20,
+    right: 20,
+    borderRadius: 12,
+    zIndex: 10,
+    ...Shadows.medium
+  },
+  newJobsText: { color: '#fff', fontSize: 12, fontWeight: '700', flex: 1 },
+  newJobsAction: { color: '#fff', fontSize: 12, fontWeight: '900', textDecorationLine: 'underline' },
+
   content: { flex: 1, paddingHorizontal: 20 },
-  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginVertical: 20 },
-  sectionTitle: { fontSize: 12, fontWeight: '900', letterSpacing: 2 },
-  filterBtn: { width: 36, height: 36, borderRadius: 8, borderWidth: 1, borderColor: 'rgba(255,255,255,0.1)', justifyContent: 'center', alignItems: 'center' },
-  listPadding: { paddingBottom: 120 },
-  jobCard: { marginBottom: 16, padding: 20 },
-  jobInfo: { flexDirection: 'row', alignItems: 'center', gap: 16 },
-  jobIconBox: { width: 50, height: 50, borderRadius: 12, borderWidth: 1.5, justifyContent: 'center', alignItems: 'center' },
-  jobTitle: { fontSize: 16, fontWeight: '900', letterSpacing: 0.5 },
-  jobMeta: { fontSize: 10, fontWeight: '700', marginTop: 4 },
+  sectionHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 20, marginBottom: 16 },
+  filterScroll: { gap: 8, paddingRight: 10 },
+  filterChip: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 20, borderWidth: 1 },
+  filterChipText: { fontSize: 12, fontWeight: '700' },
+  filterBtn: { width: 40, height: 40, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+  
+  listPadding: { paddingBottom: 120, paddingTop: 10 },
+  jobCard: { marginBottom: 16, padding: 16, borderRadius: 20 },
+  jobTopRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  distBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  distText: { fontSize: 9, fontWeight: '900' },
+  ratingRow: { flexDirection: 'row', alignItems: 'center', gap: 4 },
+  ratingText: { fontSize: 12, fontWeight: '800' },
+  
+  jobInfo: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+  jobIconBox: { width: 54, height: 54, borderRadius: 16, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+  jobTitle: { fontSize: 18, fontWeight: '900' },
+  jobMeta: { fontSize: 12, fontWeight: '600', marginTop: 2 },
+  tagRow: { flexDirection: 'row', gap: 8, marginTop: 8 },
+  tag: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  tagText: { fontSize: 9, fontWeight: '700' },
+  
   rateContainer: { alignItems: 'flex-end' },
-  rateText: { fontSize: 18, fontWeight: '900' },
-  rateSub: { fontSize: 9, fontWeight: '700' },
-  applyBtn: { marginTop: 20, paddingTop: 16, borderTopWidth: 1, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  applyBtnText: { fontSize: 11, fontWeight: '900', letterSpacing: 1 },
+  rateText: { fontSize: 20, fontWeight: '900' },
+  rateSub: { fontSize: 8, fontWeight: '800', marginTop: 2 },
+  
+  applyBtn: { 
+    marginTop: 16, 
+    padding: 16, 
+    borderRadius: 14, 
+    flexDirection: 'row', 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    gap: 8
+  },
+  applyBtnText: { fontSize: 13, fontWeight: '900', color: '#fff', letterSpacing: 1 },
+
+  emptyState: { alignItems: 'center', marginTop: 60, paddingHorizontal: 40 },
+  emptyIconBox: { width: 100, height: 100, borderRadius: 50, justifyContent: 'center', alignItems: 'center', marginBottom: 24 },
+  emptyTitle: { fontSize: 18, fontWeight: '900', letterSpacing: 1, marginBottom: 8 },
+  emptyDesc: { fontSize: 14, textAlign: 'center', lineHeight: 22, marginBottom: 32 },
+  refreshBtn: { paddingVertical: 14, paddingHorizontal: 32, borderRadius: 14 },
+  refreshBtnText: { color: '#fff', fontSize: 14, fontWeight: '900' }
 });

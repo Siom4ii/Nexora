@@ -70,7 +70,7 @@ export default function ActiveShiftScreen() {
                 </View>
                 <Text style={[styles.emptyTitle, { color: theme.text }]}>Ready for Deployment</Text>
                 <Text style={[styles.emptyDesc, { color: theme.muted }]}>
-                  You don't have an active shift right now. Browse available gigs nearby to get started.
+                  You don&apos;t have an active shift right now. Browse available gigs nearby to get started.
                 </Text>
                 <ModernButton 
                   title="FIND NEARBY GIGS" 
