@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Modal, Platform, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput, Modal, Platform } from 'react-native';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { Colors, Shadows } from '../../constants/theme';
@@ -280,20 +281,29 @@ export default function KycVerificationScreen() {
       <Modal visible={showFaceCheck} transparent animationType="fade">
         <View style={styles.modalOverlay}>
           <View style={[styles.faceCheckContainer, { backgroundColor: theme.card }]}>
-            <Text style={[styles.modalTitle, { color: theme.text }]}>Liveness Check</Text>
-            <Text style={[styles.modalSub, { color: theme.muted }]}>Position your face within the circle and blink slowly.</Text>
-            <View style={[styles.cameraCircle, { borderColor: accentColor }]}>
-              <View style={[styles.cameraDot, { backgroundColor: accentColor }]} />
-            </View>
-            <ModernButton 
-              title="CAPTURE & SUBMIT" 
-              onPress={() => { setShowFaceCheck(false); handleSubmit(); }}
-              variant={role === 'BUSINESS' ? 'business' : 'worker'}
-              style={{ width: '80%', marginTop: 40 }}
-            />
-            <TouchableOpacity onPress={() => setShowFaceCheck(false)} style={styles.cancelBtn}>
-              <Text style={{ color: theme.muted, fontWeight: '700', letterSpacing: 0.5 }}>CANCEL</Text>
-            </TouchableOpacity>
+            <ScrollView 
+              contentContainerStyle={styles.modalScrollContent}
+              showsVerticalScrollIndicator={true}
+            >
+              <Text style={[styles.modalTitle, { color: theme.text }]}>Liveness Check</Text>
+              <Text style={[styles.modalSub, { color: theme.muted }]}>Position your face within the circle and blink slowly.</Text>
+              
+              <View style={styles.cameraWrapper}>
+                <View style={[styles.cameraCircle, { borderColor: accentColor }]}>
+                  <View style={[styles.cameraDot, { backgroundColor: accentColor }]} />
+                </View>
+              </View>
+
+              <ModernButton 
+                title="CAPTURE & SUBMIT" 
+                onPress={() => { setShowFaceCheck(false); handleSubmit(); }}
+                variant={role === 'BUSINESS' ? 'business' : 'worker'}
+                style={{ width: '100%', marginTop: 32 }}
+              />
+              <TouchableOpacity onPress={() => setShowFaceCheck(false)} style={styles.cancelBtn}>
+                <Text style={{ color: theme.muted, fontWeight: '700', letterSpacing: 0.5 }}>CANCEL</Text>
+              </TouchableOpacity>
+            </ScrollView>
           </View>
         </View>
       </Modal>
@@ -362,12 +372,34 @@ const styles = StyleSheet.create({
   errorNote: { fontSize: 12, fontWeight: '700' },
   modalOverlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.95)', justifyContent: 'center', alignItems: 'center' },
   faceCheckContainer: { 
-    width: '90%', height: '75%', borderRadius: 40, 
-    alignItems: 'center', padding: 32, justifyContent: 'center' 
+    width: '90%', 
+    maxWidth: 500,
+    maxHeight: '85%', 
+    borderRadius: 40, 
+    overflow: 'hidden',
   },
-  modalTitle: { fontSize: 26, fontWeight: '900', letterSpacing: -0.5 },
-  modalSub: { fontSize: 15, textAlign: 'center', marginTop: 12, marginBottom: 48, lineHeight: 22 },
-  cameraCircle: { width: 280, height: 280, borderRadius: 140, borderWidth: 4, borderStyle: 'dashed', justifyContent: 'center', alignItems: 'center' },
+  modalScrollContent: {
+    padding: 32,
+    alignItems: 'center',
+  },
+  modalTitle: { fontSize: 26, fontWeight: '900', letterSpacing: -0.5, textAlign: 'center' },
+  modalSub: { fontSize: 15, textAlign: 'center', marginTop: 12, marginBottom: 32, lineHeight: 22 },
+  cameraWrapper: {
+    width: '100%',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 20,
+  },
+  cameraCircle: { 
+    width: 240, 
+    height: 240, 
+    borderRadius: 120, 
+    borderWidth: 4, 
+    borderStyle: 'dashed', 
+    justifyContent: 'center', 
+    alignItems: 'center',
+    position: 'relative'
+  },
   cameraDot: { position: 'absolute', top: 20, width: 12, height: 12, borderRadius: 6 },
-  cancelBtn: { marginTop: 24, padding: 12 }
+  cancelBtn: { marginTop: 16, padding: 12, width: '100%', alignItems: 'center' }
 });

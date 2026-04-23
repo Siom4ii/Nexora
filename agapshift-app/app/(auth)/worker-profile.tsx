@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, useColorScheme, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, TextInput } from 'react-native';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../context/AuthContext';
 import { Colors, Shadows } from '../../constants/theme';
@@ -22,6 +23,13 @@ export default function WorkerProfileScreen() {
   const [bio, setBio] = useState('');
   const [emergency, setEmergency] = useState({ name: '', number: '' });
   const [emergencyError, setEmergencyError] = useState<string | null>(null);
+
+  const isFormComplete = 
+    selectedSkills.length > 0 && 
+    bio.trim().length > 5 && 
+    emergency.name.trim().length > 2 && 
+    emergency.number.length === 10 && 
+    emergency.number.startsWith('9');
 
   const handleEmergencyNameChange = (v: string) => {
     const validated = v.replace(/[^a-zA-Z\s]/g, '');
@@ -73,7 +81,7 @@ export default function WorkerProfileScreen() {
         </Animated.View>
 
         <View style={styles.section}>
-          <Text style={[styles.label, { color: theme.worker }]}>SKILL TAGS (SELECT 3-5)</Text>
+          <Text style={[styles.label, { color: theme.worker }]}>SKILL TAGS</Text>
           <View style={styles.skillsContainer}>
             {SKILLS.filter(s => s !== 'Others').map(skill => {
               const isSelected = selectedSkills.includes(skill);
@@ -197,9 +205,18 @@ export default function WorkerProfileScreen() {
           title="COMPLETE PROFILE" 
           onPress={handleComplete}
           variant="worker"
-          disabled={selectedSkills.length < 3}
-          style={{ marginTop: 40, marginBottom: 60 }}
+          disabled={!isFormComplete}
+          style={{ marginTop: 40 }}
         />
+
+        {!isFormComplete && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, marginTop: 16, marginBottom: 60 }}>
+            <Ionicons name="information-circle" size={14} color={theme.danger} />
+            <Text style={{ color: theme.danger, fontSize: 11, fontWeight: '700' }}>
+              All fields are required (Skills, Bio, and Valid Emergency Contact)
+            </Text>
+          </View>
+        )}
       </View>
     </ScrollView>
   );

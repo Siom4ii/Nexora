@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, useColorScheme, Image, Platform } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Platform } from 'react-native';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors, Shadows } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 import { Ionicons } from '@expo/vector-icons';
@@ -20,7 +21,10 @@ export function ProfileScreen() {
   ];
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
+    <ScrollView 
+      style={[styles.container, { backgroundColor: theme.background }]}
+      contentContainerStyle={styles.scrollContent}
+    >
       <Animated.View entering={FadeInDown.duration(800)} style={[styles.header, { backgroundColor: theme.card }, Shadows.medium]}>
         <View style={[styles.avatarContainer, { borderColor: accentColor }]}>
           <Ionicons name="person" size={50} color={accentColor} />
@@ -50,7 +54,7 @@ export function ProfileScreen() {
           onPress={logout}
           style={[styles.logoutBtn, { borderColor: theme.danger }]}
         >
-          <Text style={[styles.logoutText, { color: theme.danger }]}>TERMINATE SESSION</Text>
+          <Text style={[styles.logoutText, { color: theme.danger }]}>LOGOUT</Text>
         </TouchableOpacity>
       </View>
     </ScrollView>
@@ -59,6 +63,7 @@ export function ProfileScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  scrollContent: { paddingBottom: 120 },
   header: { padding: 40, alignItems: 'center', borderBottomLeftRadius: 32, borderBottomRightRadius: 32, marginBottom: 24 },
   avatarContainer: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, justifyContent: 'center', alignItems: 'center', position: 'relative', marginBottom: 16 },
   verifiedBadge: { position: 'absolute', bottom: 0, right: 0, width: 24, height: 24, borderRadius: 12, justifyContent: 'center', alignItems: 'center', borderWidth: 2 },

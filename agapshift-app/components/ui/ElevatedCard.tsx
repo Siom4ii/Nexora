@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle, useColorScheme } from 'react-native';
+import { View, StyleSheet, ViewStyle } from 'react-native';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors, Shadows } from '../../constants/theme';
 import Animated, { FadeInUp, useAnimatedStyle, withRepeat, withTiming, withSequence } from 'react-native-reanimated';
 import { useAuth } from '../../context/AuthContext';
@@ -8,9 +9,10 @@ interface ElevatedCardProps {
   children: React.ReactNode;
   style?: ViewStyle;
   delay?: number;
+  noShadow?: boolean;
 }
 
-export function ElevatedCard({ children, style, delay = 0 }: ElevatedCardProps) {
+export function ElevatedCard({ children, style, delay = 0, noShadow = false }: ElevatedCardProps) {
   const colorScheme = useColorScheme() ?? 'light';
   const theme = Colors[colorScheme];
   const isDark = colorScheme === 'dark';
@@ -33,7 +35,7 @@ export function ElevatedCard({ children, style, delay = 0 }: ElevatedCardProps) 
           borderColor: theme.border,
           borderWidth: 1,
         }, 
-        Shadows.medium, 
+        !noShadow && Shadows.medium, 
         style
       ]}
     >

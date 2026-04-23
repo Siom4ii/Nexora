@@ -1,5 +1,6 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, useColorScheme } from 'react-native';
+import { View, Text, StyleSheet, ScrollView } from 'react-native';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Colors, Shadows } from '../constants/theme';
 import { useAuth } from '../context/AuthContext';
 
@@ -12,7 +13,10 @@ export function EarningsDashboard() {
   const accentColor = isBusiness ? theme.business : theme.worker;
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: theme.background }]}>
+    <ScrollView 
+      style={[styles.container, { backgroundColor: theme.background }]}
+      contentContainerStyle={styles.scrollContent}
+    >
       <View style={[styles.headerCard, { backgroundColor: accentColor }, Shadows.medium]}>
         <Text style={[styles.cardTitle, { color: theme.white }]}>
           {isBusiness ? 'Total Hiring Expenses' : 'Total Earnings'}
@@ -43,6 +47,7 @@ export function EarningsDashboard() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, padding: 20 },
+  scrollContent: { paddingBottom: 100 },
   headerCard: { padding: 25, borderRadius: 12, alignItems: 'center', marginBottom: 30 },
   cardTitle: { fontSize: 16, fontWeight: 'bold' },
   amount: { fontSize: 40, fontWeight: 'bold', marginVertical: 10 },

@@ -1,11 +1,11 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, useWindowDimensions, Platform, Image } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useAuth } from '../context/AuthContext';
-import { Colors, Shadows } from '../constants/theme';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import Animated, { FadeIn, FadeInDown, SlideInLeft, SlideInRight } from 'react-native-reanimated';
 import { ResponsiveContainer } from '../components/ui/ResponsiveContainer';
+import { Colors, Shadows } from '../constants/theme';
+import { useAuth } from '../context/AuthContext';
 
 export default function RoleSelectionScreen() {
   const router = useRouter();
@@ -37,75 +37,81 @@ export default function RoleSelectionScreen() {
         </Text>
       </View>
 
-      <ResponsiveContainer maxWidth={isWide ? 1000 : 600}>
-        <View style={styles.content}>
-          <Animated.View entering={FadeInDown.duration(1000)} style={[styles.header, { marginTop: height * 0.08 }]}>
-            <Image 
-              source={require('../assets/images/logo1.png')} 
-              style={styles.logoImage} 
-              resizeMode="contain"
-            />
-          </Animated.View>
-
-          <View style={[styles.cardsContainer, isWide && styles.cardsContainerWide]}>
-            {/* Worker Path */}
-            <Animated.View entering={SlideInLeft.delay(200).springify()} style={[styles.cardWrapper, isWide && styles.cardWrapperWide]}>
-              <TouchableOpacity 
-                activeOpacity={0.9}
-                onPress={() => handleSelectRole('WORKER')}
-                style={[
-                  styles.roleCard, 
-                  { backgroundColor: isDark ? theme.worker + '0D' : theme.white, borderColor: theme.worker },
-                  Shadows.medium
-                ]}
-              >
-                <View style={[styles.glowBackground, { backgroundColor: theme.worker, opacity: isDark ? 0.05 : 0.02 }]} />
-                <Ionicons name="flash-outline" size={42} color={theme.worker} />
-                <View style={styles.cardInfo}>
-                  <Text style={[styles.roleTitle, { color: theme.text }]}>I WANT TO WORK</Text>
-                  <Text style={[styles.roleDesc, { color: theme.muted }]}>ACCESS NEARBY SHIFTS & INSTANT PAYOUTS</Text>
-                </View>
-                <View style={[styles.roleIndicator, { backgroundColor: theme.worker }]}>
-                  <Text style={styles.indicatorText}>FIELD OPERATIVE</Text>
-                </View>
-              </TouchableOpacity>
+      <ScrollView 
+        contentContainerStyle={styles.scrollContent}
+        showsVerticalScrollIndicator={false}
+      >
+        <ResponsiveContainer maxWidth={isWide ? 1000 : 600} style={{ justifyContent: 'flex-start' }}>
+          <View style={styles.content}>
+            <Animated.View entering={FadeInDown.duration(1000)} style={[styles.header, { marginTop: 0 }]}>
+              <Image 
+                source={require('../assets/images/logo1.png')} 
+                style={styles.logoImage} 
+                resizeMode="contain"
+              />
             </Animated.View>
 
-            {/* Business Path */}
-            <Animated.View entering={SlideInRight.delay(400).springify()} style={[styles.cardWrapper, isWide && styles.cardWrapperWide]}>
-              <TouchableOpacity 
-                activeOpacity={0.9}
-                onPress={() => handleSelectRole('BUSINESS')}
-                style={[
-                  styles.roleCard, 
-                  { backgroundColor: isDark ? theme.business + '0D' : theme.white, borderColor: theme.business },
-                  Shadows.medium
-                ]}
-              >
-                <View style={[styles.glowBackground, { backgroundColor: theme.business, opacity: isDark ? 0.05 : 0.02 }]} />
-                <Ionicons name="business-outline" size={42} color={theme.business} />
-                <View style={styles.cardInfo}>
-                  <Text style={[styles.roleTitle, { color: theme.text }]}>I WANT TO HIRE</Text>
-                  <Text style={[styles.roleDesc, { color: theme.muted }]}>DEPLOY STAFF & MANAGE OPERATIONS</Text>
-                </View>
-                <View style={[styles.roleIndicator, { backgroundColor: theme.business }]}>
-                  <Text style={styles.indicatorText}>ENTERPRISE HUB</Text>
-                </View>
-              </TouchableOpacity>
+            <View style={[styles.cardsContainer, isWide && styles.cardsContainerWide]}>
+              {/* Worker Path */}
+              <Animated.View entering={SlideInLeft.delay(200).springify()} style={[styles.cardWrapper, isWide && styles.cardWrapperWide]}>
+                <TouchableOpacity 
+                  activeOpacity={0.9}
+                  onPress={() => handleSelectRole('WORKER')}
+                  style={[
+                    styles.roleCard, 
+                    { backgroundColor: isDark ? theme.worker + '0D' : theme.white, borderColor: theme.worker },
+                    Shadows.medium
+                  ]}
+                >
+                  <View style={[styles.glowBackground, { backgroundColor: theme.worker, opacity: isDark ? 0.05 : 0.02 }]} />
+                  <Ionicons name="flash-outline" size={42} color={theme.worker} />
+                  <View style={styles.cardInfo}>
+                    <Text style={[styles.roleTitle, { color: theme.text }]}>I WANT TO WORK</Text>
+                    <Text style={[styles.roleDesc, { color: theme.muted }]}>ACCESS NEARBY SHIFTS & INSTANT PAYOUTS</Text>
+                  </View>
+                  <View style={[styles.roleIndicator, { backgroundColor: theme.worker }]}>
+                    <Text style={styles.indicatorText}>FIELD OPERATIVE</Text>
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
+
+              {/* Business Path */}
+              <Animated.View entering={SlideInRight.delay(400).springify()} style={[styles.cardWrapper, isWide && styles.cardWrapperWide]}>
+                <TouchableOpacity 
+                  activeOpacity={0.9}
+                  onPress={() => handleSelectRole('BUSINESS')}
+                  style={[
+                    styles.roleCard, 
+                    { backgroundColor: isDark ? theme.business + '0D' : theme.white, borderColor: theme.business },
+                    Shadows.medium
+                  ]}
+                >
+                  <View style={[styles.glowBackground, { backgroundColor: theme.business, opacity: isDark ? 0.05 : 0.02 }]} />
+                  <Ionicons name="business-outline" size={42} color={theme.business} />
+                  <View style={styles.cardInfo}>
+                    <Text style={[styles.roleTitle, { color: theme.text }]}>I WANT TO HIRE</Text>
+                    <Text style={[styles.roleDesc, { color: theme.muted }]}>DEPLOY STAFF & MANAGE OPERATIONS</Text>
+                  </View>
+                  <View style={[styles.roleIndicator, { backgroundColor: theme.business }]}>
+                    <Text style={styles.indicatorText}>ENTERPRISE HUB</Text>
+                  </View>
+                </TouchableOpacity>
+              </Animated.View>
+            </View>
+
+            <Animated.View entering={FadeIn.delay(800)} style={styles.footer}>
+              <Text style={[styles.footerText, { color: theme.muted }]}>SECURE HANDSHAKE PROTOCOL v1.0</Text>
             </Animated.View>
           </View>
-
-          <Animated.View entering={FadeIn.delay(800)} style={styles.footer}>
-            <Text style={[styles.footerText, { color: theme.muted }]}>SECURE HANDSHAKE PROTOCOL v1.0</Text>
-          </Animated.View>
-        </View>
-      </ResponsiveContainer>
+        </ResponsiveContainer>
+      </ScrollView>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1 },
+  scrollContent: { flexGrow: 1 },
   brandOverlay: { 
     ...StyleSheet.absoluteFillObject, 
     justifyContent: 'center', 
@@ -155,6 +161,6 @@ const styles = StyleSheet.create({
     borderBottomLeftRadius: 16,
   },
   indicatorText: { color: '#000', fontSize: 9, fontWeight: '900', letterSpacing: 1 },
-  footer: { marginBottom: 40, alignItems: 'center' },
+  footer: { marginTop: 30, marginBottom: 40, alignItems: 'center' },
   footerText: { fontSize: 9, fontWeight: '800', letterSpacing: 2 },
 });

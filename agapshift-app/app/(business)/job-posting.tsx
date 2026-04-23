@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, useColorScheme, FlatList, Modal, TextInput, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Modal, TextInput, Alert, Platform, ScrollView } from 'react-native';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { LocationService } from '../../services/locationService';
 import { Colors, Shadows } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -118,56 +119,60 @@ export default function BusinessDashboard() {
         )}
 
         {activeTab === 'PENDING' && (
-          <Animated.View entering={FadeInRight} style={styles.pendingContainer}>
-            <Text style={[styles.subSectionTitle, { color: theme.muted }]}>ACTIVE REQUESTS</Text>
-            {postedJobs.filter(j => j.status === 'PENDING').map((job, idx) => (
-              <ElevatedCard key={job.id} style={styles.cyberJobInfo} delay={idx * 100}>
-                <Ionicons name="pulse" size={20} color={theme.business} />
-                <Text style={[styles.jobTitle, { color: theme.text }]}>{job.title} • ₱{job.rate}</Text>
-                <Text style={[styles.blinkText, { color: theme.warning }]}>[WAITING]</Text>
-              </ElevatedCard>
-            ))}
-            
-            <Text style={[styles.subSectionTitle, { color: theme.muted, marginTop: 32 }]}>APPLICANT QUEUE</Text>
-            {applicants.map((app, idx) => (
-              <ElevatedCard key={app.id} style={styles.applicantCard} delay={idx * 150}>
-                <View style={styles.workerInfo}>
-                  <View style={{ flex: 1 }}>
-                    <Text style={[styles.workerName, { color: theme.text }]}>{app.name.toUpperCase()}</Text>
-                    <Text style={[styles.workerSub, { color: theme.muted }]}>{app.role.toUpperCase()} • {app.distance.toUpperCase()} • ⭐ {app.rating}</Text>
+          <ScrollView contentContainerStyle={styles.pendingContainer}>
+            <Animated.View entering={FadeInRight}>
+              <Text style={[styles.subSectionTitle, { color: theme.muted }]}>ACTIVE REQUESTS</Text>
+              {postedJobs.filter(j => j.status === 'PENDING').map((job, idx) => (
+                <ElevatedCard key={job.id} style={styles.cyberJobInfo} delay={idx * 100}>
+                  <Ionicons name="pulse" size={20} color={theme.business} />
+                  <Text style={[styles.jobTitle, { color: theme.text }]}>{job.title} • ₱{job.rate}</Text>
+                  <Text style={[styles.blinkText, { color: theme.warning }]}>[WAITING]</Text>
+                </ElevatedCard>
+              ))}
+              
+              <Text style={[styles.subSectionTitle, { color: theme.muted, marginTop: 32 }]}>APPLICANT QUEUE</Text>
+              {applicants.map((app, idx) => (
+                <ElevatedCard key={app.id} style={styles.applicantCard} delay={idx * 150}>
+                  <View style={styles.workerInfo}>
+                    <View style={{ flex: 1 }}>
+                      <Text style={[styles.workerName, { color: theme.text }]}>{app.name.toUpperCase()}</Text>
+                      <Text style={[styles.workerSub, { color: theme.muted }]}>{app.role.toUpperCase()} • {app.distance.toUpperCase()} • ⭐ {app.rating}</Text>
+                    </View>
+                    <View style={styles.actionRow}>
+                      <TouchableOpacity style={[styles.declineBtn, { borderColor: theme.danger }]}><Ionicons name="close" size={20} color={theme.danger} /></TouchableOpacity>
+                      <TouchableOpacity 
+                        style={[styles.hireBtn, { backgroundColor: theme.business }]}
+                        onPress={() => handleHire(app)}
+                      >
+                        <Text style={styles.neonBtnText}>HIRE</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
-                  <View style={styles.actionRow}>
-                    <TouchableOpacity style={[styles.declineBtn, { borderColor: theme.danger }]}><Ionicons name="close" size={20} color={theme.danger} /></TouchableOpacity>
-                    <TouchableOpacity 
-                      style={[styles.hireBtn, { backgroundColor: theme.business }]}
-                      onPress={() => handleHire(app)}
-                    >
-                      <Text style={styles.neonBtnText}>HIRE</Text>
-                    </TouchableOpacity>
-                  </View>
-                </View>
-              </ElevatedCard>
-            ))}
-          </Animated.View>
+                </ElevatedCard>
+              ))}
+            </Animated.View>
+          </ScrollView>
         )}
 
         {activeTab === 'HISTORY' && (
-          <Animated.View entering={FadeInRight} style={styles.historyContainer}>
-            <Text style={[styles.subSectionTitle, { color: theme.muted }]}>DEPLOYED UNITS</Text>
-            {postedJobs.filter(j => j.status === 'ACTIVE').map((job, idx) => (
-              <ElevatedCard key={job.id} style={styles.activeUnitCard} delay={idx * 100}>
-                <View style={{ flex: 1 }}>
-                  <Text style={[styles.workerName, { color: theme.text }]}>{job.workerName?.toUpperCase()}</Text>
-                  <Text style={{ color: theme.muted, fontSize: 11 }}>SECTOR: {job.title.toUpperCase()}</Text>
-                </View>
-                <View style={[styles.glitchBadge, { backgroundColor: theme.business }]}>
-                  <Text style={[styles.glitchText, { color: theme.card }]}>LIVE DATA</Text>
-                </View>
-              </ElevatedCard>
-            ))}
-            <Text style={[styles.subSectionTitle, { color: theme.muted, marginTop: 32 }]}>PAST TALENT</Text>
-            <Text style={{ color: theme.muted, textAlign: 'center', marginTop: 20, fontSize: 12 }}>NO PREVIOUS DATA FOUND</Text>
-          </Animated.View>
+          <ScrollView contentContainerStyle={styles.historyContainer}>
+            <Animated.View entering={FadeInRight}>
+              <Text style={[styles.subSectionTitle, { color: theme.muted }]}>DEPLOYED UNITS</Text>
+              {postedJobs.filter(j => j.status === 'ACTIVE').map((job, idx) => (
+                <ElevatedCard key={job.id} style={styles.activeUnitCard} delay={idx * 100}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.workerName, { color: theme.text }]}>{job.workerName?.toUpperCase()}</Text>
+                    <Text style={{ color: theme.muted, fontSize: 11 }}>SECTOR: {job.title.toUpperCase()}</Text>
+                  </View>
+                  <View style={[styles.glitchBadge, { backgroundColor: theme.business }]}>
+                    <Text style={[styles.glitchText, { color: theme.card }]}>LIVE DATA</Text>
+                  </View>
+                </ElevatedCard>
+              ))}
+              <Text style={[styles.subSectionTitle, { color: theme.muted, marginTop: 32 }]}>PAST TALENT</Text>
+              <Text style={{ color: theme.muted, textAlign: 'center', marginTop: 20, fontSize: 12 }}>NO PREVIOUS DATA FOUND</Text>
+            </Animated.View>
+          </ScrollView>
         )}
       </View>
 
@@ -257,12 +262,12 @@ const styles = StyleSheet.create({
   workerSub: { fontSize: 10, fontWeight: '700', marginTop: 4 },
   neonBtn: { paddingVertical: 8, paddingHorizontal: 12, borderRadius: 4, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
   neonBtnText: { fontSize: 10, fontWeight: '900', color: '#FFFFFF' },
-  pendingContainer: { padding: 20 },
+  pendingContainer: { padding: 20, paddingBottom: 150 },
   subSectionTitle: { fontSize: 11, fontWeight: '900', marginBottom: 20, letterSpacing: 2 },
   cyberJobInfo: { flexDirection: 'row', alignItems: 'center', gap: 12, marginBottom: 12 },
   jobTitle: { flex: 1, fontWeight: '800', fontSize: 13, letterSpacing: 0.5 },
   blinkText: { fontSize: 10, fontWeight: '900' },
-  historyContainer: { padding: 20 },
+  historyContainer: { padding: 20, paddingBottom: 150 },
   activeUnitCard: { flexDirection: 'row', alignItems: 'center', gap: 14, marginBottom: 16 },
   glitchBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 2 },
   glitchText: { color: '#000', fontSize: 9, fontWeight: '900' },

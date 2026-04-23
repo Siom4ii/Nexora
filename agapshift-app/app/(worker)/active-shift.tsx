@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, useColorScheme, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Platform, ScrollView } from 'react-native';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { useAuth } from '../../context/AuthContext';
 import { Colors, Shadows } from '../../constants/theme';
 import { Ionicons } from '@expo/vector-icons';
@@ -189,7 +190,7 @@ const styles = StyleSheet.create({
   },
   pulseDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff' },
   liveText: { color: '#fff', fontSize: 11, fontWeight: '900', letterSpacing: 1 },
-  content: { paddingHorizontal: 20, paddingBottom: 40 },
+  content: { paddingHorizontal: 20, paddingBottom: 100 },
   
   // Empty State
   emptyState: { marginTop: 40 },

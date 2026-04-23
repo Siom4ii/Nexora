@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, FlatList, useColorScheme, TouchableOpacity, Alert, Platform } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, Platform } from 'react-native';
+import { useColorScheme } from '@/hooks/use-color-scheme';
 import { LocationService } from '../../services/locationService';
 import { Colors, Shadows } from '../../constants/theme';
 import { ElevatedCard } from '../../components/ui/ElevatedCard';
@@ -176,7 +177,7 @@ export default function GigMapScreen() {
           keyExtractor={(item) => item.id}
           contentContainerStyle={styles.listPadding}
           renderItem={({ item, index }) => (
-            <ElevatedCard style={styles.jobCard} delay={index * 100}>
+            <ElevatedCard style={styles.jobCard} delay={index * 100} noShadow>
               <View style={styles.jobInfo}>
                 <View style={[styles.jobIconBox, { borderColor: theme.worker }]}>
                   <Ionicons name="briefcase" size={24} color={theme.worker} />
